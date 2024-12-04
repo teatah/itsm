@@ -12,14 +12,14 @@ import (
 )
 
 func main() {
-	dsn := "root:@tcp(localhost:3306)/itsm"
+	dsn := "root:admin@tcp(localhost:3306)/itsm"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Migrate the schema
-	err = db.AutoMigrate(&models.User{})
+	err = db.AutoMigrate(&models.User{}, &models.ServiceLine{}, &models.Service{})
 	if err != nil {
 		log.Fatal(err)
 	}

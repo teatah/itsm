@@ -3,6 +3,7 @@ package dashboard
 import (
 	"gorm.io/gorm"
 	"html/template"
+	"itsm/models"
 	"net/http"
 )
 
@@ -23,7 +24,25 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Раздел Бизнес услуги"))
+	var services []models.Service
+	if err := db.Preload("ServiceLine").
+		Joins("JOIN service_lines ON service_lines.id = services.service_line_id").
+		Where("service_lines.name = ?", "Бизнес услуги").
+		Find(&services).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err := template.ParseFiles("templates/dashboard/business_services.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, services)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func technicalServicesHandler(w http.ResponseWriter, r *http.Request) {

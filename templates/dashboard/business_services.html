@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бизнес услуги</title>
+    <link rel="stylesheet" href="/templates/dashboard/styles.css">
+    <script>
+        let selectedRow = null;
+
+        function selectRow(row) {
+            // Если кликнули на уже выделенную строку, снимаем выделение
+            if (selectedRow === row) {
+                selectedRow.classList.remove('selected');
+                selectedRow = null;
+            } else {
+                // Удаляем выделение с предыдущей строки, если она есть
+                if (selectedRow) {
+                    selectedRow.classList.remove('selected');
+                }
+                // Выделяем новую строку
+                selectedRow = row;
+                selectedRow.classList.add('selected');
+            }
+        }
+
+        function editService() {
+            if (selectedRow) {
+                const serviceId = selectedRow.cells[0].innerText;
+                window.location.href = `/edit-service?id=${serviceId}`;
+            } else {
+                alert('Пожалуйста, выберите строку для редактирования.');
+            }
+        }
+
+        function deleteService() {
+            if (selectedRow) {
+                const serviceId = selectedRow.cells[0].innerText;
+                const confirmation = confirm('Вы уверены, что хотите удалить эту услугу?');
+                if (confirmation) {
+                    window.location.href = `/delete-service?id=${serviceId}`;
+                }
+            } else {
+                alert('Пожалуйста, выберите строку для удаления.');
+            }
+        }
+
+        // Убираем выделение при клике вне таблицы
+        document.addEventListener('click', function(event) {
+            const table = document.querySelector('table');
+            if (!table.contains(event.target) && selectedRow) {
+                selectedRow.classList.remove('selected');
+                selectedRow = null;
+            }
+        });
+    </script>
+</head>
+<body>
+<div class="header">
+    <h1>Добро пожаловать в панель управления</h1>
+    <div class="nav">
+        <a href="/business-services">Бизнес услуги</a>
+        <a href="/technical-services">Технические услуги</a>
+        <a href="/incidents">Инциденты</a>
+        <a href="/messenger">Мессенджер</a>
+    </div>
+</div>
+<div class="content">
+    <h2>Список бизнес услуг</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Сервисная линия</th>
+            <th>Название</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{range .}}
+        <tr onclick="selectRow(this)">
+            <td>{{.ID}}</td>
+            <td>{{.ServiceLine.Name}}</td>
+            <td>{{.Name}}</td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+    <br>
+    <button class="button" onclick="editService()">Редактировать</button>
+    <button class="button" onclick="deleteService()">Удалить</button>
+    <br><br>
+    <a class="button add-service" href="/add-service">Добавить новую услугу</a>
+</div>
+</body>
+</html>
