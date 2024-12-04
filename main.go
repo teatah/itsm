@@ -27,6 +27,9 @@ func main() {
 	auth.SetupRoutes(db)
 	dashboard.SetupRoutes(db)
 
+	fs := http.FileServer(http.Dir("./templates"))
+	http.Handle("/templates/", http.StripPrefix("/templates/", fs))
+
 	log.Println("Сервер запущен на :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal("Ошибка при запуске сервера:", err)

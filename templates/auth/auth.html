@@ -1,0 +1,25 @@
+<!-- templates/auth.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .Register}}Регистрация{{else}}Авторизация{{end}}</title>
+    <link rel="stylesheet" href="/templates/auth/styles.css">
+</head>
+<body>
+<h1>{{if .Register}}Регистрация{{else}}Авторизация{{end}}</h1>
+<form method="post">
+    <label for="username">Логин:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="password">Пароль:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="submit">{{if .Register}}Зарегистрироваться{{else}}Войти{{end}}</button>
+    {{if not .Register}}
+    <a class="register-button" onclick="location.href='/register'">Зарегистрироваться</a>
+    {{end}}
+</form>
+</body>
+</html>

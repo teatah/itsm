@@ -48,7 +48,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/auth.html"))
+	tmpl := template.Must(template.ParseFiles("templates/auth/auth.html"))
 	if err := tmpl.Execute(w, map[string]interface{}{"Register": false}); err != nil {
 		log.Println("Ошибка при выполнении шаблона:", err)
 		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
@@ -94,7 +94,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/auth.html"))
+	tmpl := template.Must(template.ParseFiles("templates/auth/auth.html"))
 	if err := tmpl.Execute(w, map[string]interface{}{"Register": true}); err != nil {
 		log.Println("Ошибка при выполнении шаблона:", err)
 		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)

@@ -18,7 +18,7 @@ func SetupRoutes(database *gorm.DB) {
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("templates/dashboard.html"))
+	tmpl := template.Must(template.ParseFiles("templates/dashboard/dashboard.html"))
 	tmpl.Execute(w, nil)
 }
 
