@@ -1,4 +1,4 @@
-package api
+package auth
 
 import (
 	"database/sql"
@@ -14,37 +14,6 @@ func SetupRoutes(database *sql.DB) {
 	db = database
 	http.HandleFunc("/", authHandler)
 	http.HandleFunc("/register", registerHandler)
-	http.HandleFunc("/welcome", welcomeHandler)
-	http.HandleFunc("/dashboard", dashboardHandler)
-	http.HandleFunc("/business-services", businessServicesHandler)
-	http.HandleFunc("/technical-services", technicalServicesHandler)
-	http.HandleFunc("/incidents", incidentsHandler)
-	http.HandleFunc("/messenger", messengerHandler)
-}
-
-func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("templates/dashboard.html"))
-	tmpl.Execute(w, nil)
-}
-
-func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
-	// Здесь будет логика для отображения бизнес услуг
-	w.Write([]byte("Раздел Бизнес услуги"))
-}
-
-func technicalServicesHandler(w http.ResponseWriter, r *http.Request) {
-	// Здесь будет логика для отображения технических услуг
-	w.Write([]byte("Раздел Технические услуги"))
-}
-
-func incidentsHandler(w http.ResponseWriter, r *http.Request) {
-	// Здесь будет логика для отображения инцидентов
-	w.Write([]byte("Раздел Инциденты"))
-}
-
-func messengerHandler(w http.ResponseWriter, r *http.Request) {
-	// Здесь будет логика для отображения мессенджера
-	w.Write([]byte("Раздел Мессенджер"))
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
@@ -123,8 +92,4 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := template.Must(template.ParseFiles("templates/auth.html"))
 	tmpl.Execute(w, map[string]interface{}{"Register": true})
-}
-
-func welcomeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Добро пожаловать! Вы успешно авторизованы."))
 }

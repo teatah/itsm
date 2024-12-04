@@ -3,11 +3,12 @@ package main
 
 import (
 	"database/sql"
+	"itsm/api/auth"
+	"itsm/api/dashboard"
 	"log"
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
-	"itsm/api" // Замените на имя вашего модуля
 )
 
 func main() {
@@ -28,7 +29,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	api.SetupRoutes(db)
+	auth.SetupRoutes(db)
+	dashboard.SetupRoutes(db)
 
 	log.Println("Сервер запущен на :8080")
 	http.ListenAndServe(":8080", nil)
