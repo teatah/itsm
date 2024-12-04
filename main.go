@@ -2,34 +2,33 @@
 package main
 
 import (
-	"database/sql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"itsm/api/auth"
+	"itsm/api/dashboard"
+	"itsm/models"
 	"log"
 	"net/http"
-
-	_ "github.com/go-sql-driver/mysql"
-	"itsm/api" // Замените на имя вашего модуля
 )
 
 func main() {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/itsm")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// Создание таблицы пользователей
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(255) NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        is_admin BOOLEAN DEFAULT FALSE
-    )`)
+	dsn := "root:@tcp(localhost:3306)/itsm"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	api.SetupRoutes(db)
+	// Migrate the schema
+	err = db.AutoMigrate(&models.User{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	auth.SetupRoutes(db)
+	dashboard.SetupRoutes(db)
 
 	log.Println("Сервер запущен на :8080")
-	http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal("Ошибка при запуске сервера:", err)
+	}
 }
