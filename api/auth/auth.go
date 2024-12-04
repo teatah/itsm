@@ -1,16 +1,19 @@
 package auth
 
 import (
-	"database/sql"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"html/template"
+	"itsm/models"
 	"log"
 	"net/http"
 )
 
-var db *sql.DB
+var db *gorm.DB
 
-func SetupRoutes(database *sql.DB) {
+type user models.User
+
+func SetupRoutes(database *gorm.DB) {
 	db = database
 	http.HandleFunc("/", authHandler)
 	http.HandleFunc("/register", registerHandler)
@@ -22,10 +25,9 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		// Проверка пользователя
-		var storedHash string
-		err := db.QueryRow("SELECT password FROM users WHERE username = ?", username).Scan(&storedHash)
-		if err != nil {
-			if err == sql.ErrNoRows {
+		var user user
+		if err := db.Where("username = ?", username).First(&user).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
 				http.Error(w, "Неверный логин или пароль", http.StatusUnauthorized)
 				return
 			}
@@ -35,7 +37,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Проверка пароля
-		err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password))
+		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 		if err != nil {
 			http.Error(w, "Неверный логин или пароль", http.StatusUnauthorized)
 			return
@@ -47,7 +49,10 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/auth.html"))
-	tmpl.Execute(w, map[string]interface{}{"Register": false})
+	if err := tmpl.Execute(w, map[string]interface{}{"Register": false}); err != nil {
+		log.Println("Ошибка при выполнении шаблона:", err)
+		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
+	}
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,15 +61,14 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		// Проверка на существование пользователя
-		var exists bool
-		err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE username = ?)", username).Scan(&exists)
-		if err != nil {
+		var count int64
+		if err := db.Model(&user{}).Where("username = ?", username).Count(&count).Error; err != nil {
 			log.Println("Ошибка при выполнении запроса:", err)
 			http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 			return
 		}
 
-		if exists {
+		if count > 0 {
 			http.Error(w, "Пользователь с таким логином уже существует", http.StatusConflict)
 			return
 		}
@@ -78,8 +82,8 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Добавление нового пользователя
-		_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, hashedPassword)
-		if err != nil {
+		newUser := user{Username: username, Password: string(hashedPassword)}
+		if err := db.Create(&newUser).Error; err != nil {
 			log.Println("Ошибка при добавлении пользователя:", err)
 			http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 			return
@@ -91,5 +95,8 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/auth.html"))
-	tmpl.Execute(w, map[string]interface{}{"Register": true})
+	if err := tmpl.Execute(w, map[string]interface{}{"Register": true}); err != nil {
+		log.Println("Ошибка при выполнении шаблона:", err)
+		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
+	}
 }
