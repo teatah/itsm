@@ -60,7 +60,7 @@ func startGoroutines(db *gorm.DB) {
 	}
 
 	if use2servers {
-		go startServer(getEnv("PORT1"), db)
+		go startServer(getEnv("PORT2"), db)
 	}
 
 	select {}
