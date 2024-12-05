@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"html/template"
@@ -13,10 +14,10 @@ var db *gorm.DB
 
 type user models.User
 
-func SetupRoutes(database *gorm.DB) {
+func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
-	http.HandleFunc("/", authHandler)
-	http.HandleFunc("/register", registerHandler)
+	r.HandleFunc("/", authHandler)
+	r.HandleFunc("/register", registerHandler)
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {

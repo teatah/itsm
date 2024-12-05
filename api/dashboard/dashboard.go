@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
@@ -9,13 +10,13 @@ import (
 
 var db *gorm.DB
 
-func SetupRoutes(database *gorm.DB) {
+func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
-	http.HandleFunc("/dashboard", dashboardHandler)
-	http.HandleFunc("/business-services", businessServicesHandler)
-	http.HandleFunc("/technical-services", technicalServicesHandler)
-	http.HandleFunc("/incidents", incidentsHandler)
-	http.HandleFunc("/messenger", messengerHandler)
+	r.HandleFunc("/dashboard", dashboardHandler)
+	r.HandleFunc("/business-services", businessServicesHandler)
+	r.HandleFunc("/technical-services", technicalServicesHandler)
+	r.HandleFunc("/incidents", incidentsHandler)
+	r.HandleFunc("/messenger", messengerHandler)
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
