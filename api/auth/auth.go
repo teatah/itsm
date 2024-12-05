@@ -11,6 +11,7 @@ import (
 )
 
 var db *gorm.DB
+var serverErrorText = "Ошибка сервера. Попробуйте позже"
 
 type user models.User
 
@@ -21,6 +22,7 @@ func SetupRoutes(r *mux.Router, database *gorm.DB) {
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
+	errorMessage := ""
 	if r.Method == http.MethodPost {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
@@ -29,34 +31,36 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		var user user
 		if err := db.Where("username = ?", username).First(&user).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
-				http.Error(w, "Неверный логин или пароль", http.StatusUnauthorized)
-				return
+				errorMessage = "Неверный логин или пароль"
 			}
 			log.Println("Ошибка при выполнении запроса:", err)
-			http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
-			return
 		}
 
 		// Проверка пароля
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 		if err != nil {
-			http.Error(w, "Неверный логин или пароль", http.StatusUnauthorized)
-			return
+			errorMessage = "Неверный логин или пароль"
 		}
 
 		// Успешная авторизация
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
-		return
+		if len(errorMessage) == 0 {
+			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+			return
+		}
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/auth/auth.html"))
-	if err := tmpl.Execute(w, map[string]interface{}{"Register": false}); err != nil {
+	err := tmpl.Execute(w, map[string]interface{}{
+		"Register":     false,
+		"ErrorMessage": errorMessage})
+	if err != nil {
 		log.Println("Ошибка при выполнении шаблона:", err)
 		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 	}
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
+	errorMessage := ""
 	if r.Method == http.MethodPost {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
@@ -65,38 +69,38 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		var count int64
 		if err := db.Model(&user{}).Where("username = ?", username).Count(&count).Error; err != nil {
 			log.Println("Ошибка при выполнении запроса:", err)
-			http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
-			return
+			errorMessage = serverErrorText
 		}
 
 		if count > 0 {
-			http.Error(w, "Пользователь с таким логином уже существует", http.StatusConflict)
-			return
+			errorMessage = "Пользователь с таким логином уже существует"
 		}
 
 		// Хеширование пароля
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			log.Println("Ошибка при хешировании пароля:", err)
-			http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
-			return
+			errorMessage = serverErrorText
 		}
 
 		// Добавление нового пользователя
 		newUser := user{Username: username, Password: string(hashedPassword)}
 		if err := db.Create(&newUser).Error; err != nil {
 			log.Println("Ошибка при добавлении пользователя:", err)
-			http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
-			return
+			errorMessage = serverErrorText
 		}
 
-		// Успешная регистрация
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
+		if len(errorMessage) == 0 {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/auth/auth.html"))
-	if err := tmpl.Execute(w, map[string]interface{}{"Register": true}); err != nil {
+	err := tmpl.Execute(w, map[string]interface{}{
+		"Register":     true,
+		"ErrorMessage": errorMessage})
+	if err != nil {
 		log.Println("Ошибка при выполнении шаблона:", err)
 		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 	}

@@ -17,6 +17,9 @@
     <input type="password" id="password" name="password" required>
     <br>
     <button type="submit">{{if .Register}}Зарегистрироваться{{else}}Войти{{end}}</button>
+    {{ if .ErrorMessage }}
+    <div class="error">{{ .ErrorMessage }}</div>
+    {{ end }}
     {{if not .Register}}
     <a class="register-button" onclick="location.href='/register'">Зарегистрироваться</a>
     {{end}}
