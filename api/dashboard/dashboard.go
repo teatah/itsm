@@ -19,7 +19,12 @@ func SetupRoutes(database *gorm.DB) {
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("templates/dashboard/dashboard.html"))
+	tmpl, err := template.ParseFiles("templates/dashboard/dashboard.html",
+		"templates/header/header.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	tmpl.Execute(w, nil)
 }
 
@@ -33,7 +38,9 @@ func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("templates/dashboard/business_services.html")
+	tmpl, err := template.ParseFiles("templates/business_services/business_services.html",
+		"templates/header/header.html")
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

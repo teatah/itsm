@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Бизнес услуги</title>
+    <link rel="stylesheet" href="/templates/business_services/styles.css">
     <link rel="stylesheet" href="/templates/dashboard/styles.css">
     <script>
         let selectedRow = null;
@@ -56,15 +57,7 @@
     </script>
 </head>
 <body>
-<div class="header">
-    <h1>Добро пожаловать в панель управления</h1>
-    <div class="nav">
-        <a href="/business-services">Бизнес услуги</a>
-        <a href="/technical-services">Технические услуги</a>
-        <a href="/incidents">Инциденты</a>
-        <a href="/messenger">Мессенджер</a>
-    </div>
-</div>
+{{template "header" .}}
 <div class="content">
     <h2>Список бизнес услуг</h2>
     <table>
