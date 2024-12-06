@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	_ "itsm/session"
 )
 
 func startServer(port string, db *gorm.DB) {

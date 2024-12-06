@@ -2,12 +2,17 @@ package auth
 
 import (
 	"github.com/gorilla/mux"
+	_ "github.com/gorilla/sessions"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
+	"itsm/session"
 	"log"
 	"net/http"
+	"strings"
+
+	_ "itsm/session"
 )
 
 var db *gorm.DB
@@ -22,6 +27,21 @@ func SetupRoutes(r *mux.Router, database *gorm.DB) {
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
+	// Получаем порт из r.Host
+	hostParts := strings.Split(r.Host, ":")
+	var port string
+	if len(hostParts) > 1 {
+		port = hostParts[1] // Порт будет вторым элементом
+	} else {
+		// Если порт не указан, устанавливаем значение по умолчанию
+		if r.URL.Scheme == "http" {
+			port = "80"
+		} else if r.URL.Scheme == "https" {
+			port = "443"
+		}
+	}
+
+	sessionName := "session-" + port
 	errorMessage := ""
 	if r.Method == http.MethodPost {
 		username := r.FormValue("username")
@@ -44,6 +64,11 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Успешная авторизация
 		if len(errorMessage) == 0 {
+			session, _ := session.Store.Get(r, sessionName)
+			session.Values["userID"] = user.ID
+			session.Values["isAdmin"] = user.IsAdmin // Сохраняем права доступа
+			session.Save(r, w)
+
 			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 			return
 		}

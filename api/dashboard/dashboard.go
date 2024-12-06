@@ -5,7 +5,11 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
+	"itsm/session"
 	"net/http"
+	"strings"
+
+	_ "itsm/session"
 )
 
 var db *gorm.DB
@@ -31,6 +35,27 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 	var services []models.Service
+
+	// Получаем порт из r.Host
+	hostParts := strings.Split(r.Host, ":")
+	var port string
+	if len(hostParts) > 1 {
+		port = hostParts[1] // Порт будет вторым элементом
+	} else {
+		// Если порт не указан, устанавливаем значение по умолчанию
+		if r.URL.Scheme == "http" {
+			port = "80"
+		} else if r.URL.Scheme == "https" {
+			port = "443"
+		}
+	}
+
+	sessionName := "session-" + port
+
+	session, err := session.Store.Get(r, sessionName)
+
+	isAdmin := session.Values["isAdmin"].(bool)
+
 	if err := db.Where("is_business = ?", true).Find(&services).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -44,7 +69,11 @@ func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = tmpl.Execute(w, services)
+	// Передаем данные в шаблон, включая права доступа
+	err = tmpl.Execute(w, map[string]interface{}{
+		"Services": services,
+		"IsAdmin":  isAdmin, // Передаем информацию о правах доступа
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

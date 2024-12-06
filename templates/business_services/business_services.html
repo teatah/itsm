@@ -10,16 +10,13 @@
         let selectedRow = null;
 
         function selectRow(row) {
-            // Если кликнули на уже выделенную строку, снимаем выделение
             if (selectedRow === row) {
                 selectedRow.classList.remove('selected');
                 selectedRow = null;
             } else {
-                // Удаляем выделение с предыдущей строки, если она есть
                 if (selectedRow) {
                     selectedRow.classList.remove('selected');
                 }
-                // Выделяем новую строку
                 selectedRow = row;
                 selectedRow.classList.add('selected');
             }
@@ -46,7 +43,6 @@
             }
         }
 
-        // Убираем выделение при клике вне таблицы
         document.addEventListener('click', function(event) {
             const table = document.querySelector('table');
             if (!table.contains(event.target) && selectedRow) {
@@ -68,7 +64,7 @@
         </tr>
         </thead>
         <tbody>
-        {{range .}}
+        {{range .Services}}
         <tr onclick="selectRow(this)">
             <td>{{.ID}}</td>
             <td>{{.Name}}</td>
@@ -77,8 +73,10 @@
         </tbody>
     </table>
     <br>
+    {{if .IsAdmin}} <!-- Проверка прав доступа -->
     <button class="button" onclick="editService()">Редактировать</button>
     <button class="button" onclick="deleteService()">Удалить</button>
+    {{end}}
     <br><br>
     <a class="button add-service" href="/add-service">Добавить новую услугу</a>
 </div>
