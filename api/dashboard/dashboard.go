@@ -31,10 +31,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 	var services []models.Service
-	if err := db.Preload("ServiceLine").
-		Joins("JOIN service_lines ON service_lines.id = services.service_line_id").
-		Where("service_lines.name = ?", "Бизнес услуги").
-		Find(&services).Error; err != nil {
+	if err := db.Where("is_business = ?", true).Find(&services).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
