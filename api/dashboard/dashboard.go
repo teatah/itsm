@@ -6,8 +6,8 @@ import (
 	"html/template"
 	"itsm/models"
 	"itsm/session"
+	"itsm/utils"
 	"net/http"
-	"strings"
 
 	_ "itsm/session"
 )
@@ -36,22 +36,8 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 	var services []models.Service
 
-	// Получаем порт из r.Host
-	hostParts := strings.Split(r.Host, ":")
-	var port string
-	if len(hostParts) > 1 {
-		port = hostParts[1] // Порт будет вторым элементом
-	} else {
-		// Если порт не указан, устанавливаем значение по умолчанию
-		if r.URL.Scheme == "http" {
-			port = "80"
-		} else if r.URL.Scheme == "https" {
-			port = "443"
-		}
-	}
-
+	port := utils.GetPort(r)
 	sessionName := "session-" + port
-
 	session, err := session.Store.Get(r, sessionName)
 
 	isAdmin := session.Values["isAdmin"].(bool)
