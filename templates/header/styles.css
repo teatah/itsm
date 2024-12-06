@@ -4,3 +4,18 @@
     padding: 20px;
     text-align: center;
 }
+
+.nav {
+    margin: 20px 0;
+}
+
+.nav a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+}
+
+.nav a:hover {
+    text-decoration: underline;
+}
