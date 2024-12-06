@@ -5,7 +5,11 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
+	"itsm/session"
+	"itsm/utils"
 	"net/http"
+
+	_ "itsm/session"
 )
 
 var db *gorm.DB
@@ -34,6 +38,13 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 
 func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 	var services []models.Service
+
+	port := utils.GetPort(r)
+	sessionName := "session-" + port
+	session, err := session.Store.Get(r, sessionName)
+
+	isAdmin := session.Values["isAdmin"].(bool)
+
 	if err := db.Where("is_business = ?", true).Find(&services).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -47,7 +58,11 @@ func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = tmpl.Execute(w, services)
+	// Передаем данные в шаблон, включая права доступа
+	err = tmpl.Execute(w, map[string]interface{}{
+		"Services": services,
+		"IsAdmin":  isAdmin, // Передаем информацию о правах доступа
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
