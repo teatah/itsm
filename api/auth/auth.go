@@ -32,32 +32,19 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	errorMessage := ""
 
 	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-
-		// Проверка пользователя
-		var user user
-		if err := db.Where("username = ?", username).First(&user).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				errorMessage = "Неверный логин или пароль"
-			}
-			log.Println("Ошибка при выполнении запроса:", err)
-		}
-
-		// Проверка пароля
-		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-		if err != nil {
-			errorMessage = "Неверный логин или пароль"
-		}
+		user, errorMessage := authUser(r)
 
 		// Успешная авторизация
 		if len(errorMessage) == 0 {
-			session, _ := session.Store.Get(r, sessionName)
-			session.Values["userID"] = user.ID
-			session.Values["isAdmin"] = user.IsAdmin
-			session.Values["isTechOfficer"] = user.IsTechOfficer
-			session.Values["isDefaultOfficer"] = user.IsDefaultOfficer // Сохраняем права доступа
-			session.Save(r, w)
+			curSession, _ := session.Store.Get(r, sessionName)
+			curSession.Values["userID"] = user.ID
+			curSession.Values["isAdmin"] = user.IsAdmin
+			curSession.Values["isTechOfficer"] = user.IsTechOfficer
+			curSession.Values["isDefaultOfficer"] = user.IsDefaultOfficer // Сохраняем права доступа
+			err := curSession.Save(r, w)
+			if err != nil {
+				http.Error(w, "Ошибка сохранения сесии", http.StatusUnauthorized)
+			}
 
 			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 			return
@@ -75,36 +62,32 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func authUser(r *http.Request) (user, string) {
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	// Проверка пользователя
+	var user user
+	if err := db.Where("username = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return user, "Неверный логин или пароль"
+		}
+		log.Println("Ошибка при выполнении запроса:", err)
+		return user, serverErrorText
+	}
+
+	// Проверка пароля
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return user, "Неверный логин или пароль"
+	}
+	return user, ""
+}
+
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	errorMessage := ""
 	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-
-		// Проверка на существование пользователя
-		var count int64
-		if err := db.Model(&user{}).Where("username = ?", username).Count(&count).Error; err != nil {
-			log.Println("Ошибка при выполнении запроса:", err)
-			errorMessage = serverErrorText
-		}
-
-		if count > 0 {
-			errorMessage = "Пользователь с таким логином уже существует"
-		}
-
-		// Хеширование пароля
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		if err != nil {
-			log.Println("Ошибка при хешировании пароля:", err)
-			errorMessage = serverErrorText
-		}
-
-		// Добавление нового пользователя
-		newUser := user{Username: username, Password: string(hashedPassword)}
-		if err := db.Create(&newUser).Error; err != nil {
-			log.Println("Ошибка при добавлении пользователя:", err)
-			errorMessage = serverErrorText
-		}
+		errorMessage = registerUser(r)
 
 		if len(errorMessage) == 0 {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -121,4 +104,35 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Ошибка при выполнении шаблона:", err)
 		http.Error(w, "Ошибка сервера", http.StatusInternalServerError)
 	}
+}
+
+func registerUser(r *http.Request) string {
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	// Проверка на существование пользователя
+	var count int64
+	if err := db.Model(&user{}).Where("username = ?", username).Count(&count).Error; err != nil {
+		log.Println("Ошибка при выполнении запроса:", err)
+		return serverErrorText
+	}
+
+	if count > 0 {
+		return "Пользователь с таким логином уже существует"
+	}
+
+	// Хеширование пароля
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Println("Ошибка при хешировании пароля:", err)
+		return serverErrorText
+	}
+
+	// Добавление нового пользователя
+	newUser := user{Username: username, Password: string(hashedPassword)}
+	if err := db.Create(&newUser).Error; err != nil {
+		log.Println("Ошибка при добавлении пользователя:", err)
+		return serverErrorText
+	}
+	return ""
 }
