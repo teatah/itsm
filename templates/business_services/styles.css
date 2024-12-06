@@ -5,13 +5,6 @@ body {
     padding: 0;
 }
 
-.header {
-    background-color: #4CAF50; /* Зеленый цвет */
-    color: white;
-    padding: 20px;
-    text-align: center;
-}
-
 .nav {
     margin: 20px 0;
 }

@@ -26,7 +26,10 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tmpl.Execute(w, nil)
+	err = tmpl.Execute(w, nil)
+	if err != nil {
+		return
+	}
 }
 
 func businessServicesHandler(w http.ResponseWriter, r *http.Request) {

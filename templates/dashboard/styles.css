@@ -5,13 +5,6 @@ body {
     padding: 0;
 }
 
-.header {
-    background: linear-gradient(to bottom, #86dce4, #1b575e); /* Градиент от светло-голубого к синему */
-    color: white;
-    padding: 20px;
-    text-align: center;
-}
-
 .nav {
     margin: 20px 0;
 }
