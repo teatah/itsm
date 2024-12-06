@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -30,7 +31,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		// Проверка пользователя
 		var user user
 		if err := db.Where("username = ?", username).First(&user).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				errorMessage = "Неверный логин или пароль"
 			}
 			log.Println("Ошибка при выполнении запроса:", err)
