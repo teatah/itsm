@@ -23,6 +23,9 @@ type Incident struct {
 }
 
 type Message struct {
-	ID      uint   `gorm:"primaryKey"`
-	Content string `gorm:"not null"`
+	ID         uint   `json:"id"`
+	SenderID   uint   `json:"sender_id"`
+	ReceiverID uint   `json:"receiver_id"`
+	Content    string `json:"content"`
+	Timestamp  string `json:"timestamp"`
 }
