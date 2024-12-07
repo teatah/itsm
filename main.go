@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 	"itsm/api/auth"
 	"itsm/api/dashboard"
+	"itsm/api/services"
 	"itsm/models"
 	"log"
 	"net/http"
@@ -22,6 +23,7 @@ func startServer(port string, db *gorm.DB) {
 	r := mux.NewRouter()
 	auth.SetupRoutes(r, db)
 	dashboard.SetupRoutes(r, db)
+	services.SetupRoutes(r, db)
 
 	fs := http.FileServer(http.Dir("./templates"))
 	r.PathPrefix("/templates/").Handler(http.StripPrefix("/templates/", fs))

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{if .IsEdit}}Редактировать{{else if .IsView}}Просмотр{{else}}Добавить{{end}} Услугу</title>
+    <link rel="stylesheet" href="/templates/service_edit_view_add/styles.css">
+    <link rel="stylesheet" href="/templates/header/styles.css">
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const method = form.dataset.method;
+            const action = form.action;
+
+            fetch(action, {
+                method: method,
+                body: formData
+            })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/business-services'; // Перенаправление на список услуг
+                    } else {
+                        alert('Ошибка при сохранении данных.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    alert('Ошибка при сохранении данных.');
+                });
+        }
+    </script>
+</head>
+<body>
+{{template "header" .}}
+<div class="content">
+    <h2>{{if .IsEdit}}Редактирование услуги{{else if .IsView}}Услуга{{else}}Добавление услуги{{end}}</h2>
+    <form action="{{if .IsEdit}}/update-service?id={{.Service.ID}}{{else}}/create-service{{end}}" method="POST" onsubmit="handleSubmit(event)" data-method="{{if .IsEdit}}PUT{{else}}POST{{end}}">
+        {{if .IsCreate}}
+        <!-- Если IsCreate истинно, скрываем поле ID -->
+        {{else}}
+        <div>
+            <label for="id">ID:</label>
+            <input type="text" id="id" name="id" value="{{.Service.ID}}" readonly>
+        </div>
+        {{end}}
+        <div>
+            <label for="name">Название:</label>
+            <input type="text" id="name" name="name" value="{{.Service.Name}}" {{if .IsView}}readonly{{end}} required>
+        </div>
+        <div>
+            <label for="description">Описание:</label>
+            <textarea id="description" name="description" {{if .IsView}}readonly{{end}} required>{{.Service.Description}}</textarea>
+        </div>
+        <div>
+            <div>
+                <label for="isBusiness">Бизнес</label>
+                <input type="radio" id="isBusiness" name="serviceType" value="business" {{if .Service.IsBusiness}}checked{{end}} {{if .IsView}}disabled{{end}}>
+            </div>
+            <div>
+                <label for="isTechnical">Технический</label>
+                <input type="radio" id="isTechnical" name="serviceType" value="technical" {{if .Service.IsTechnical}}checked{{end}} {{if .IsView}}disabled{{end}}>
+            </div>
+        </div>
+        <br>
+        {{if .IsEdit}}<button type="submit">Обновить</button>{{end}}
+        {{if .IsCreate}}<button type="submit">Создать</button>{{end}}
+        <a href="/business-services" class="button">Назад</a>
+    </form>
+</div>
+</body>
+</html>
