@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бизнес услуги</title>
-    <link rel="stylesheet" href="/templates/business_services/styles.css">
+    <title>{{if .IsBusiness}}Список бизнес услуг{{else if .IsTechnical}}Список технических услуг{{end}}</title>
+    <link rel="stylesheet" href="/templates/services/styles.css">
     <link rel="stylesheet" href="/templates/header/styles.css">
     <script>
         let selectedRow = null;
@@ -31,12 +31,35 @@
             }
         }
 
+        function openService() {
+            if (selectedRow) {
+                const serviceId = selectedRow.cells[0].innerText;
+                window.location.href = `/open-service?id=${serviceId}`;
+            } else {
+                alert('Пожалуйста, выберите строку для открытия.');
+            }
+        }
+
         function deleteService() {
             if (selectedRow) {
                 const serviceId = selectedRow.cells[0].innerText;
                 const confirmation = confirm('Вы уверены, что хотите удалить эту услугу?');
                 if (confirmation) {
-                    window.location.href = `/delete-service?id=${serviceId}`;
+                    fetch(`/delete-service?id=${serviceId}`, {
+                        method: 'DELETE'
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                // Успешное удаление, обновите страницу или удалите строку из таблицы
+                                window.location.reload(); // Перезагрузить страницу
+                            } else {
+                                alert('Ошибка при удалении услуги.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Ошибка:', error);
+                            alert('Ошибка при удалении услуги.');
+                        });
                 }
             } else {
                 alert('Пожалуйста, выберите строку для удаления.');
@@ -55,7 +78,7 @@
 <body>
 {{template "header" .}}
 <div class="content">
-    <h2>Список бизнес услуг</h2>
+    <h2>{{if .IsBusiness}}Список бизнес услуг{{else if .IsTechnical}}Список технических услуг{{end}}</h2>
     <table>
         <thead>
         <tr>
@@ -73,12 +96,15 @@
         </tbody>
     </table>
     <br>
-    {{if .IsAdmin}} <!-- Проверка прав доступа -->
+    <button class="button" onclick="openService()">Открыть</button>
+    {{if .IsAdmin}}
     <button class="button" onclick="editService()">Редактировать</button>
     <button class="button" onclick="deleteService()">Удалить</button>
     {{end}}
     <br><br>
+    {{if .IsAdmin}}
     <a class="button add-service" href="/add-service">Добавить новую услугу</a>
+    {{end}}
 </div>
 </body>
 </html>
