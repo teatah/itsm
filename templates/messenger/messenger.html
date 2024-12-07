@@ -1,50 +1,58 @@
+<!--<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Мессенджер</title>
+  <link rel="stylesheet" href="/static/css/messenger.css">
+  <link rel="stylesheet" href="/templates/header/styles.css">&lt;!&ndash; Подключаем CSS &ndash;&gt;
+</head>
+<body>
+<div class="content">
+  <h1>Список переписок</h1>
+  <ul>
+    {{range .Conversations}}
+    <li>
+      Переписка с пользователем ID: {{.User1ID}} и ID: {{.User2ID}}
+      &lt;!&ndash; Здесь можно добавить ссылку на страницу переписки &ndash;&gt;
+    </li>
+    {{end}}
+  </ul>
+</div>
+</body>
+</html>-->
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Мессенджер</title>
-  <link rel="stylesheet" href="/templates/messenger/styles.css">
+  <link rel="stylesheet" href="/templates/messenger/styles.css"> <!-- Подключаем CSS -->
   <link rel="stylesheet" href="/templates/header/styles.css">
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 {{template "header" .}}
-<div class="container"> <!-- Обернули содержимое в контейнер -->
-  <button id="create-dialog">Создать диалог</button>
-  <div id="user-selection" style="display:none;">
-    <h2>Выберите пользователя</h2>
-    <ul id="user-list">
-      <!-- Здесь будет список пользователей -->
-    </ul>
-    <button id="close-selection">Закрыть</button>
+<div class="content">
+  <div style="text-align: right;">
+    <strong>Текущий пользователь: {{.CurrentUser.Username}}</strong>
   </div>
+  <h1>Список переписок</h1>
+  <ul>
+    {{range .Conversations}}
+    <li>
+      Переписка с пользователем {{if eq .User1ID $.CurrentUser.ID}}{{index $.UserMap .User2ID}}{{else}}{{index $.UserMap .User1ID}}{{end}}
+      <a href="/conversation?id={{.ID}}" class="button">Открыть</a>
+    </li>
+    {{end}}
+  </ul>
+  <h2>Создать новую переписку</h2>
+  <form action="/messenger/create" method="POST">
+    <select name="receiver_id">
+      {{range .Users}}
+      <option value="{{.ID}}">{{.Username}}</option>
+      {{end}}
+    </select>
+    <button type="submit" class="button">Создать переписку</button>
+  </form>
 </div>
-
-<script>
-  $(document).ready(function() {
-    $('#create-dialog').click(function() {
-      $('#user-selection').show();
-      $('#user-list').empty();
-
-      $.ajax({
-        url: '/users/get',
-        method: 'GET',
-        success: function(data) {
-          data.forEach(function(user) {
-            $('#user-list').append('<li>' + user.Username + '</li>');
-          });
-        },
-        error: function() {
-          alert('Ошибка при загрузке пользователей');
-        }
-      });
-    });
-
-    $('#close-selection').click(function() {
-      $('#user-selection').hide();
-    });
-  });
-</script>
 </body>
 </html>

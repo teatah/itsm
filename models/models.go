@@ -22,10 +22,18 @@ type Incident struct {
 	Details string `gorm:"not null"`
 }
 
+type Conversation struct {
+	ID       uint      `json:"id" gorm:"primaryKey"`
+	User1ID  uint      `json:"user1_id"`
+	User2ID  uint      `json:"user2_id"`
+	Messages []Message `json:"messages" gorm:"foreignKey:ConversationID"`
+}
+
 type Message struct {
-	ID         uint   `json:"id"`
-	SenderID   uint   `json:"sender_id"`
-	ReceiverID uint   `json:"receiver_id"`
-	Content    string `json:"content"`
-	Timestamp  string `json:"timestamp"`
+	ID             uint   `json:"id" gorm:"primaryKey"`
+	SenderID       uint   `json:"sender_id"`
+	ReceiverID     uint   `json:"receiver_id"`
+	Content        string `json:"content"`
+	Timestamp      string `json:"timestamp"`
+	ConversationID uint   `json:"conversation_id"`
 }
