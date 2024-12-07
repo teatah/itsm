@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мессенджер</title>
+  <link rel="stylesheet" href="/templates/messenger/styles.css">
+  <link rel="stylesheet" href="/templates/header/styles.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+{{template "header" .}}
+<div class="container"> <!-- Обернули содержимое в контейнер -->
+  <button id="create-dialog">Создать диалог</button>
+  <div id="user-selection" style="display:none;">
+    <h2>Выберите пользователя</h2>
+    <ul id="user-list">
+      <!-- Здесь будет список пользователей -->
+    </ul>
+    <button id="close-selection">Закрыть</button>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#create-dialog').click(function() {
+      $('#user-selection').show();
+      $('#user-list').empty();
+
+      $.ajax({
+        url: '/users/get',
+        method: 'GET',
+        success: function(data) {
+          data.forEach(function(user) {
+            $('#user-list').append('<li>' + user.Username + '</li>');
+          });
+        },
+        error: function() {
+          alert('Ошибка при загрузке пользователей');
+        }
+      });
+    });
+
+    $('#close-selection').click(function() {
+      $('#user-selection').hide();
+    });
+  });
+</script>
+</body>
+</html>

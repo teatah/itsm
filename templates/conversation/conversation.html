@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Переписка</title>
+  <link rel="stylesheet" href="/templates/conversation/styles.css">
+  <link rel="stylesheet" href="/templates/header/styles.css">
+</head>
+<body>
+{{ template "header" .}}
+<div class="content">
+  <h1>Переписка</h1>
+  <ul>
+    {{range .Conversation.Messages}}
+    <li>
+      <strong>{{if eq .SenderID $.CurrentUser}}{{"Вы"}}{{else}}{{index $.UserMap .SenderID}}{{end}}:</strong> {{.Content}} <em>{{.Timestamp}}</em>
+    </li>
+    {{end}}
+  </ul>
+  <form action="/conversation/send" method="POST">
+    <input type="hidden" name="conversation_id" value="{{.Conversation.ID}}">
+    <textarea name="content" required></textarea>
+    <button type="submit" class="button">Отправить</button>
+  </form>
+</div>
+</body>
+</html>
