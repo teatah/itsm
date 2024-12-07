@@ -20,7 +20,13 @@
             })
                 .then(response => {
                     if (response.ok) {
-                        window.location.href = '/business-services'; // Перенаправление на список услуг
+                        const serviceType = form.querySelector('input[name="serviceType"]:checked').value;
+                        // Перенаправление на соответствующий список услуг
+                        if (serviceType === 'business') {
+                            window.location.href = '/business-services';
+                        } else if (serviceType === 'technical') {
+                            window.location.href = '/technical-services';
+                        } // Перенаправление на список услуг
                     } else {
                         alert('Ошибка при сохранении данных.');
                     }
@@ -66,7 +72,8 @@
         <br>
         {{if .IsEdit}}<button type="submit">Обновить</button>{{end}}
         {{if .IsCreate}}<button type="submit">Создать</button>{{end}}
-        <a href="/business-services" class="button">Назад</a>
+        {{if .Service.IsBusiness}} <a href="/business-services" class="button">Назад</a> {{end}}
+        {{if .Service.IsTechnical}} <a href="/technical-services" class="button">Назад</a> {{end}}
     </form>
 </div>
 </body>
