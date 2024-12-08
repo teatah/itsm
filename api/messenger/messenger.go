@@ -41,10 +41,12 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := db.Table("users").
-		Select("users.*").
-		Joins("LEFT JOIN dialogs ON (dialogs.user1_id = users.id OR dialogs.user2_id = users.id)").
-		Where("users.id != ? AND dialogs.id IS NULL", userID).Find(&users).Error; err != nil {
+	if err := db.Table("users").Select("users.*").
+		Joins("LEFT JOIN dialogs ON (users.id = dialogs.user1_id AND dialogs.user2_id = ?)"+
+			"OR (users.id = dialogs.user2_id AND dialogs.user1_id = ?)", userID, userID).
+		Where("users.id != ?", userID).
+		Where("dialogs.id IS NULL").
+		Find(&users).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
