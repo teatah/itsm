@@ -10,10 +10,7 @@ import (
 	"net/http"
 )
 
-var db *gorm.DB
-
-func SetupRoutes(r *mux.Router, database *gorm.DB) {
-	db = database
+func SetupRoutes(r *mux.Router, _ *gorm.DB) {
 	r.HandleFunc("/dashboard", dashboardHandler)
 	r.HandleFunc("/incidents", incidentsHandler)
 	r.HandleFunc("/messenger", messengerHandler)
