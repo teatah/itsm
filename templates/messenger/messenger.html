@@ -132,36 +132,38 @@
       if (lastMessageElement.length) {
         lastTimestamp = lastMessageElement.find('.raw_timestamp').text();
       }
-      console.log(lastTimestamp)
 
       $.ajax({
         url: '/messages/get/' + dialogId,
         method: 'GET',
         data: { lastTimestamp: lastTimestamp },
         success: function(messages) {
-          messages.forEach(function(message) {
-            const date = new Date(message.timestamp);
-            const options = {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false
-            };
-            const formattedTimestamp = date.toLocaleString('ru-RU', options);
+          if (messages && Array.isArray(messages)) {
+            messages.forEach(function(message) {
+              const date = new Date(message.timestamp);
+              const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              };
+              const formattedTimestamp = date.toLocaleString('ru-RU', options);
 
-            $('#message-list').append('<div><strong>' + message.sender_name + ':</strong> ' + message.content
-                    + ' <em>(' + formattedTimestamp + ')</em>'
-                    + '<span class="raw_timestamp" style="display: none;">' + date.toISOString() + '</span></div>');
-          });
+              $('#message-list').append('<div><strong>' + message.sender_name + ':</strong> ' + message.content
+                      + ' <em>(' + formattedTimestamp + ')</em>'
+                      + '<span class="raw_timestamp" style="display: none;">' + date.toISOString() + '</span></div>');
+            });
+          }
         },
         error: function() {
           alert('Ошибка при загрузке сообщений');
         }
       });
     }
+
 
     // Обработка отправки сообщения
     $('#send-message').click(function() {
@@ -171,7 +173,6 @@
       var compId = active_dialog.data('comp-id');
 
       if (messageContent) {
-        console.log('ID:', compId);
         let cur_date = new Date();
 
         $.ajax({
