@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 	"itsm/api/auth"
 	"itsm/api/dashboard"
+	"itsm/api/messenger"
 	"itsm/api/services"
 	"itsm/models"
 	"log"
@@ -24,6 +25,7 @@ func startServer(port string, db *gorm.DB) {
 	auth.SetupRoutes(r, db)
 	dashboard.SetupRoutes(r, db)
 	services.SetupRoutes(r, db)
+	messenger.SetupRoutes(r, db)
 
 	fs := http.FileServer(http.Dir("./templates"))
 	r.PathPrefix("/templates/").Handler(http.StripPrefix("/templates/", fs))
@@ -82,13 +84,13 @@ func main() {
 	dbHost := getEnv("DB_HOST")
 	dbName := getEnv("DB_NAME")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUser, dbPass, dbHost, dbName)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbName)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{})
+	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{}, &models.Dialog{})
 	if err != nil {
 		log.Fatal(err)
 	}

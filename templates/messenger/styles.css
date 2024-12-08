@@ -5,13 +5,31 @@ body {
     padding: 0;
 }
 
+#create-dialog {
+    position: absolute;
+}
+
 .container {
+    display: flex;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+.dialog-panel {
+    width: 30%;
     padding: 20px;
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    max-width: 800px;
-    margin: 20px auto;
+    margin-right: 20px;
+}
+
+.message-panel {
+    width: 70%;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 button {
@@ -37,16 +55,39 @@ button:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-#user-list {
+#user-list, #dialog-list {
     list-style-type: none;
     padding: 0;
 }
 
-#user-list li {
+#user-list li, #dialog-list li {
     padding: 10px;
     border-bottom: 1px solid #eee;
+    cursor: pointer;
 }
 
-#user-list li:hover {
+#user-list li:hover, #dialog-list li:hover {
     background-color: #f1f1f1;
+}
+
+#message-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+#message-list div {
+    margin-bottom: 10px;
+}
+
+#message-input {
+    width: calc(100% - 22px);
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.message-panel h2 {
+    margin-top: 0;
 }

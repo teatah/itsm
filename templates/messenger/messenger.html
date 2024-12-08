@@ -10,7 +10,7 @@
 </head>
 <body>
 {{template "header" .}}
-<div class="container"> <!-- Обернули содержимое в контейнер -->
+<div class="container">
   <button id="create-dialog">Создать диалог</button>
   <div id="user-selection" style="display:none;">
     <h2>Выберите пользователя</h2>
@@ -19,9 +19,25 @@
     </ul>
     <button id="close-selection">Закрыть</button>
   </div>
-</div>
 
+  <div class="dialog-panel">
+    <h2>Диалоги</h2>
+    <ul id="dialog-list">
+      <!-- Здесь будет список диалогов -->
+    </ul>
+  </div>
+
+  <div class="message-panel" style="display:none;">
+    <h2>Диалог с <span id="dialog-user-name"></span></h2>
+    <div id="message-list">
+      <!-- Здесь будут сообщения -->
+    </div>
+    <textarea id="message-input" placeholder="Введите сообщение..."></textarea>
+    <button id="send-message">Отправить</button>
+  </div>
+</div>
 <script>
+  var currentUserId = {{ .UserID }};
   $(document).ready(function() {
     $('#create-dialog').click(function() {
       $('#user-selection').show();
@@ -32,7 +48,7 @@
         method: 'GET',
         success: function(data) {
           data.forEach(function(user) {
-            $('#user-list').append('<li>' + user.Username + '</li>');
+            $('#user-list').append('<li data-user-id="' + user.id + '">' + user.username + '</li>');
           });
         },
         error: function() {
@@ -43,6 +59,141 @@
 
     $('#close-selection').click(function() {
       $('#user-selection').hide();
+    });
+
+    // Загрузка существующих диалогов
+    $.ajax({
+      url: '/dialogs/get',
+      method: 'GET',
+      success: function(data) {
+        $('#dialog-list').empty();
+        data.forEach(function(dialog) {
+          $('#dialog-list').append('<li data-dialog-id="' + dialog.id + '"data-comp-id="' + dialog.comp_id
+                  + '">' + 'Диалог с ' + dialog.comp + '</li>');
+        });
+      },
+      error: function() {
+        alert('Ошибка при загрузке диалогов');
+      }
+    });
+
+    // Обработка выбора пользователя для создания диалога
+    $(document).on('click', '#user-list li', function() {
+      var selectedUser = $(this).text();
+      var selectedUserId = $(this).data('user-id');
+
+      $.ajax({
+        url: '/dialogs/create',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          user1_id: currentUserId,
+          user2_id: selectedUserId
+        }),
+        success: function(dialog) {
+          $('#dialog-list').append('<li data-dialog-id="' + dialog.id + '"data-comp-id="'
+                  + selectedUserId + '">' + 'Диалог с ' + selectedUser + '</li>');
+          $('#user-selection').hide();
+        },
+        error: function() {
+          alert('Ошибка при создании диалога');
+        }
+      });
+    });
+
+    // Обработка выбора диалога
+    $(document).on('click', '#dialog-list li', function() {
+      $('#dialog-list li').removeClass('active');
+
+      $(this).addClass('active');
+
+      var dialogId = $(this).data('dialog-id');
+
+      if (!dialogId) {
+        alert('Ошибка: ID диалога не найден.');
+        return;
+      }
+
+      var userName = $(this).text().split('с ')[1];
+
+      $('#dialog-user-name').text(userName);
+      $('#message-list').empty();
+      $('.message-panel').show();
+
+
+      loadMessages(dialogId);
+    });
+
+    // Загружаем сообщения диалога
+    function loadMessages(dialogId) {
+      // Получаем временную метку последнего сообщения
+      let lastTimestamp = new Date(0).toISOString();
+      const lastMessageElement = $('#message-list div').last();
+      if (lastMessageElement.length) {
+        lastTimestamp = lastMessageElement.find('.raw_timestamp').text();
+      }
+      console.log(lastTimestamp)
+
+      $.ajax({
+        url: '/messages/get/' + dialogId,
+        method: 'GET',
+        data: { lastTimestamp: lastTimestamp },
+        success: function(messages) {
+          messages.forEach(function(message) {
+            const date = new Date(message.timestamp);
+            const options = {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            };
+            const formattedTimestamp = date.toLocaleString('ru-RU', options);
+
+            $('#message-list').append('<div><strong>' + message.sender_name + ':</strong> ' + message.content
+                    + ' <em>(' + formattedTimestamp + ')</em>'
+                    + '<span class="raw_timestamp" style="display: none;">' + date.toISOString() + '</span></div>');
+          });
+        },
+        error: function() {
+          alert('Ошибка при загрузке сообщений');
+        }
+      });
+    }
+
+    // Обработка отправки сообщения
+    $('#send-message').click(function() {
+      var messageContent = $('#message-input').val();
+      var dialogId = $('#dialog-list li.active').data('dialog-id'); // Получаем ID активного диалога
+      var compId = $('#dialog-list li.active').data('comp-id');
+
+      if (messageContent) {
+        console.log('ID:', compId);
+        let cur_date = new Date();
+
+        $.ajax({
+          url: '/messages/send',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            dialog_id: dialogId,
+            receiver_id: compId,
+            content: messageContent,
+            timestamp: cur_date
+          }),
+          success: function() {
+            $('#message-input').val('');
+            loadMessages(dialogId);
+          },
+          error: function() {
+            alert('Ошибка при отправке сообщения');
+          }
+        });
+      } else {
+        alert('Введите сообщение перед отправкой');
+      }
     });
   });
 </script>
