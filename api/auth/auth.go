@@ -43,7 +43,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 			curSession.Values["isDefaultOfficer"] = user.IsDefaultOfficer // Сохраняем права доступа
 			err := curSession.Save(r, w)
 			if err != nil {
-				http.Error(w, "Ошибка сохранения сесии", http.StatusUnauthorized)
+				http.Error(w, "Ошибка сохранения сессии", http.StatusUnauthorized)
 			}
 
 			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)

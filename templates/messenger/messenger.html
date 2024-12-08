@@ -68,7 +68,7 @@
       success: function(data) {
         $('#dialog-list').empty();
         data.forEach(function(dialog) {
-          $('#dialog-list').append('<li data-dialog-id="' + dialog.id + '"data-comp-id="' + dialog.comp_id
+          $('#dialog-list').append('<li data-dialog-id="' + dialog.id + '" data-comp-id="' + dialog.comp_id
                   + '">' + 'Диалог с ' + dialog.comp + '</li>');
         });
       },
@@ -91,7 +91,7 @@
           user2_id: selectedUserId
         }),
         success: function(dialog) {
-          $('#dialog-list').append('<li data-dialog-id="' + dialog.id + '"data-comp-id="'
+          $('#dialog-list').append('<li data-dialog-id="' + dialog.id + '" data-comp-id="'
                   + selectedUserId + '">' + 'Диалог с ' + selectedUser + '</li>');
           $('#user-selection').hide();
         },
@@ -166,8 +166,9 @@
     // Обработка отправки сообщения
     $('#send-message').click(function() {
       var messageContent = $('#message-input').val();
-      var dialogId = $('#dialog-list li.active').data('dialog-id'); // Получаем ID активного диалога
-      var compId = $('#dialog-list li.active').data('comp-id');
+      var active_dialog = $('#dialog-list li.active')
+      var dialogId = active_dialog.data('dialog-id'); // Получаем ID активного диалога
+      var compId = active_dialog.data('comp-id');
 
       if (messageContent) {
         console.log('ID:', compId);
