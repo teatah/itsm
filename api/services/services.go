@@ -5,8 +5,6 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
-	"itsm/session"
-	"itsm/utils"
 	"net/http"
 	"strconv"
 )
@@ -15,80 +13,12 @@ var db *gorm.DB
 
 func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
-	r.HandleFunc("/business-services", businessServicesHandler)
-	r.HandleFunc("/technical-services", technicalServicesHandler)
 	r.HandleFunc("/delete-service", deleteServiceHandler).Methods("DELETE")
 	r.HandleFunc("/edit-service", editServiceHandler).Methods("GET")
 	r.HandleFunc("/open-service", openServiceHandler).Methods("GET")
 	r.HandleFunc("/add-service", addServiceHandler).Methods("GET")
 	r.HandleFunc("/update-service", updateServiceHandler).Methods("PUT")
 	r.HandleFunc("/create-service", createServiceHandler).Methods("POST")
-}
-
-func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
-	var services []models.Service
-
-	port := utils.GetPort(r)
-	sessionName := "session-" + port
-	curSession, err := session.Store.Get(r, sessionName)
-
-	isAdmin := curSession.Values["isAdmin"].(bool)
-
-	if err := db.Where("is_business = ?", true).Find(&services).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	tmpl, err := template.ParseFiles("templates/services/services.html",
-		"templates/header/header.html")
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Передаем данные в шаблон, включая права доступа
-	err = tmpl.Execute(w, map[string]interface{}{
-		"Services":   services,
-		"IsAdmin":    isAdmin, // Передаем информацию о правах доступа
-		"IsBusiness": true,
-	})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func technicalServicesHandler(w http.ResponseWriter, r *http.Request) {
-	var services []models.Service
-
-	port := utils.GetPort(r)
-	sessionName := "session-" + port
-	curSession, err := session.Store.Get(r, sessionName)
-
-	isAdmin := curSession.Values["isAdmin"].(bool)
-
-	if err := db.Where("is_technical = ?", true).Find(&services).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	tmpl, err := template.ParseFiles("templates/services/services.html",
-		"templates/header/header.html")
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Передаем данные в шаблон, включая права доступа
-	err = tmpl.Execute(w, map[string]interface{}{
-		"Services":    services,
-		"IsAdmin":     isAdmin, // Передаем информацию о правах доступа
-		"IsTechnical": true,
-	})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
 }
 
 func updateServiceHandler(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +84,7 @@ func addServiceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Отображаем шаблон
-	renderTemplate(w, "templates/service_edit_view_add/service_edit_view_add.html", data)
+	renderTemplate(w, "templates/service/service.html", data)
 }
 
 func openServiceHandler(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +114,7 @@ func openServiceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Отображаем шаблон
-	renderTemplate(w, "templates/service_edit_view_add/service_edit_view_add.html", data)
+	renderTemplate(w, "templates/service/service.html", data)
 }
 
 func editServiceHandler(w http.ResponseWriter, r *http.Request) {
@@ -214,7 +144,7 @@ func editServiceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Отображаем шаблон
-	renderTemplate(w, "templates/service_edit_view_add/service_edit_view_add.html", data)
+	renderTemplate(w, "templates/service/service.html", data)
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {

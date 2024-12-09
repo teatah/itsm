@@ -11,8 +11,7 @@
 
         function selectRow(row) {
             if (selectedRow === row) {
-                selectedRow.classList.remove('selected');
-                selectedRow = null;
+                openService();
             } else {
                 if (selectedRow) {
                     selectedRow.classList.remove('selected');
@@ -50,10 +49,10 @@
                     })
                         .then(response => {
                             if (response.ok) {
-                                // Успешное удаление, обновите страницу или удалите строку из таблицы
-                                window.location.reload(); // Перезагрузить страницу
+                                selectedRow.remove();
+                                selectedRow = null;
                             } else {
-                                alert('Ошибка при удалении услуги.');
+                                alert('Ошибка при удалении услуги: ' + response.statusText);
                             }
                         })
                         .catch(error => {
@@ -68,7 +67,8 @@
 
         document.addEventListener('click', function(event) {
             const table = document.querySelector('table');
-            if (!table.contains(event.target) && selectedRow) {
+            const deleteButton = document.querySelector('button[onclick="deleteService()"]');
+            if (!table.contains(event.target) && selectedRow && !deleteButton.contains(event.target)) {
                 selectedRow.classList.remove('selected');
                 selectedRow = null;
             }
@@ -96,7 +96,6 @@
         </tbody>
     </table>
     <br>
-    <button class="button" onclick="openService()">Открыть</button>
     {{if .IsAdmin}}
     <button class="button" onclick="editService()">Редактировать</button>
     <button class="button" onclick="deleteService()">Удалить</button>
