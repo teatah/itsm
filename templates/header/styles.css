@@ -1,8 +1,9 @@
 .header {
-    background: linear-gradient(to bottom, #86dce4, #1b575e); /* Градиент от светло-голубого к синему */
+    background: linear-gradient(to bottom, #86dce4, #1b575e);
     color: white;
     padding: 20px;
     text-align: center;
+    position: relative;
 }
 
 .nav {
@@ -18,4 +19,20 @@
 
 .nav a:hover {
     text-decoration: underline;
+}
+
+.logout-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #cc4a4a;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.logout-button:hover {
+    background-color: #bf3737;
 }
