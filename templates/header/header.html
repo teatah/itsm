@@ -3,9 +3,13 @@
   <h1>GMD studio</h1>
   <div class="nav">
     <a href="/business-services">Бизнес услуги</a>
+    {{if not .IsClient}}
     <a href="/technical-services">Технические услуги</a>
+    {{end}}
     <a href="/incidents">Инциденты</a>
+    {{if not .IsClient}}
     <a href="/messenger">Мессенджер</a>
+    {{end}}
   </div>
   <a href="/logout" class="logout-button">Выйти</a>
 </div>
