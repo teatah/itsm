@@ -26,16 +26,16 @@ type Incident struct {
 
 type Message struct {
 	ID         uint      `json:"id" gorm:"primaryKey"`
-	DialogID   uint      `json:"dialog_id" gorm:"not null"`
-	SenderID   uint      `json:"sender_id" gorm:"not null"`
-	ReceiverID uint      `json:"receiver_id" gorm:"not null"`
+	DialogID   uint      `json:"dialog_id" gorm:"not null;foreignKey:DialogID"`
+	SenderID   uint      `json:"sender_id" gorm:"not null;foreignKey:UserID"`
+	ReceiverID uint      `json:"receiver_id" gorm:"not null;foreignKey:UserID"`
 	Content    string    `json:"content" gorm:"type:text;not null"`
 	Timestamp  time.Time `json:"timestamp" gorm:"timestamp"`
 }
 
 type Dialog struct {
 	ID            uint `json:"id"`
-	User1ID       uint `json:"user1_id"`
-	User2ID       uint `json:"user2_id"`
-	LastMessageID uint `json:"last_message_id"`
+	User1ID       uint `json:"user1_id" gorm:"foreignKey:UserID"`
+	User2ID       uint `json:"user2_id" gorm:"foreignKey:UserID"`
+	LastMessageID uint `json:"last_message_id" gorm:"foreignKey:MessageID"`
 }

@@ -5,7 +5,6 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
-	"itsm/session"
 	_ "itsm/session"
 	"itsm/utils"
 	"net/http"
@@ -22,15 +21,25 @@ func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	r.HandleFunc("/messenger", messengerHandler)
 }
 
-func dashboardHandler(w http.ResponseWriter, _ *http.Request) {
+func dashboardHandler(w http.ResponseWriter, r *http.Request) {
+	isClient, err := utils.IsClientUser(r)
+	if err != nil {
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
 	tmpl, err := template.ParseFiles("templates/dashboard/dashboard.html",
 		"templates/header/header.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = tmpl.Execute(w, nil)
+
+	err = tmpl.Execute(w, map[string]interface{}{
+		"IsClient": isClient,
+	})
 	if err != nil {
+		http.Error(w, "Ошибка при выполнении шаблона", http.StatusInternalServerError)
 		return
 	}
 }
@@ -42,9 +51,17 @@ func incidentsHandler(w http.ResponseWriter, r *http.Request) {
 func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 	var services []models.Service
 
-	port := utils.GetPort(r)
-	sessionName := "session-" + port
-	curSession, err := session.Store.Get(r, sessionName)
+	curSession, err := utils.GetCurSession(r)
+	if err != nil {
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	isClient, err := utils.IsClientUser(r)
+	if err != nil {
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
 
 	isAdmin := curSession.Values["isAdmin"].(bool)
 
@@ -66,6 +83,7 @@ func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 		"Services":   services,
 		"IsAdmin":    isAdmin, // Передаем информацию о правах доступа
 		"IsBusiness": true,
+		"IsClient":   isClient,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -75,9 +93,11 @@ func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 func technicalServicesHandler(w http.ResponseWriter, r *http.Request) {
 	var services []models.Service
 
-	port := utils.GetPort(r)
-	sessionName := "session-" + port
-	curSession, err := session.Store.Get(r, sessionName)
+	curSession, err := utils.GetCurSession(r)
+	if err != nil {
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
 
 	isAdmin := curSession.Values["isAdmin"].(bool)
 
@@ -106,11 +126,9 @@ func technicalServicesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func messengerHandler(w http.ResponseWriter, r *http.Request) {
-	port := utils.GetPort(r)
-	sessionName := "session-" + port
-	curSession, err := session.Store.Get(r, sessionName)
+	curSession, err := utils.GetCurSession(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
