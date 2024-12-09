@@ -30,7 +30,8 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	errorMessage := ""
 
 	if r.Method == http.MethodPost {
-		user, errorMessage := authUser(r)
+		var user user
+		user, errorMessage = authUser(r)
 
 		// Успешная авторизация
 		if len(errorMessage) == 0 {
