@@ -138,11 +138,12 @@ func messengerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Передаем userID в шаблон
 	data := struct {
-		UserID uint
+		UserID   uint
+		IsClient bool
 	}{
-		UserID: userID,
+		UserID:   userID,
+		IsClient: false,
 	}
 
 	tmpl, err := template.ParseFiles("templates/messenger/messenger.html",
