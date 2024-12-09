@@ -24,6 +24,7 @@ func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
 	r.HandleFunc("/", authHandler)
 	r.HandleFunc("/register", registerHandler)
+	r.HandleFunc("/logout", logoutHandler) // Добавляем маршрут для выхода
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
@@ -135,4 +136,22 @@ func registerUser(r *http.Request) string {
 		return serverErrorText
 	}
 	return ""
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	port := utils.GetPort(r)
+	sessionName := "session-" + port
+
+	curSession, _ := session.Store.Get(r, sessionName)
+	curSession.Options.MaxAge = -1
+
+	// Сохраняем изменения в сессии
+	err := curSession.Save(r, w)
+	if err != nil {
+		http.Error(w, "Ошибка при выходе", http.StatusInternalServerError)
+		return
+	}
+
+	// Перенаправляем на страницу авторизации или главную
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
