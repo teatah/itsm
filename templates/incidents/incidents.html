@@ -7,27 +7,37 @@
     <link rel="stylesheet" href="/templates/header/styles.css">
 </head>
 <body>
-{{template "header" .}} <!-- Вставка заголовка -->
+{{template "header" .}}
 
 <div class="content">
     <h2>Список инцидентов</h2>
-    <a href="/incidents/add" class="button add-service">Добавить инцидент</a> <!-- Кнопка для добавления инцидента -->
+
+    <a href="/incidents/add" class="button add-service">Добавить инцидент</a>
+
     <table>
         <thead>
         <tr>
-            <th>ID</th>
             <th>Название</th>
             <th>Статус</th>
             <th>Пользователь</th>
+            <th>Ответственный</th>
+            <th>Создан</th>
         </tr>
         </thead>
         <tbody>
         {{range .Incidents}}
         <tr>
-            <td>{{.ID}}</td>
             <td><a href="/incident/{{.ID}}">{{.Title}}</a></td>
             <td>{{.Status}}</td>
-            <td>{{.User.Username}}</td>
+            <td>{{.AuthorUsername}}</td>
+            <td>
+                {{if .ResponsibleUsername}}
+                    {{.ResponsibleUsername}}
+                {{else}}
+                    Не назначен
+                {{end}}
+            </td>
+            <td>{{.CreatedAt.Format "02/01/2006 15:04"}}</td>
         </tr>
         {{end}}
         </tbody>

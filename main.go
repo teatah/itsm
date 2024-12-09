@@ -9,6 +9,7 @@ import (
 	"itsm/api/auth"
 	"itsm/api/dashboard"
 	"itsm/api/messenger"
+	"itsm/api/incidents"
 	"itsm/api/services"
 	"itsm/models"
 	"log"
@@ -25,6 +26,7 @@ func startServer(port string, db *gorm.DB) {
 	auth.SetupRoutes(r, db)
 	dashboard.SetupRoutes(r, db)
 	services.SetupRoutes(r, db)
+	incidents.SetupRoutes(r, db)
 	messenger.SetupRoutes(r, db)
 
 	fs := http.FileServer(http.Dir("./templates"))
