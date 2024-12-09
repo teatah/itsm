@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
-	"itsm/session"
 	_ "itsm/session"
 	"itsm/utils"
 	"log"
@@ -24,12 +23,10 @@ func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
 	r.HandleFunc("/", authHandler)
 	r.HandleFunc("/register", registerHandler)
-	r.HandleFunc("/logout", logoutHandler) // Добавляем маршрут для выхода
+	r.HandleFunc("/logout", logoutHandler)
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
-	port := utils.GetPort(r)
-	sessionName := "session-" + port
 	errorMessage := ""
 
 	if r.Method == http.MethodPost {
@@ -37,12 +34,16 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Успешная авторизация
 		if len(errorMessage) == 0 {
-			curSession, _ := session.Store.Get(r, sessionName)
+			curSession, err := utils.GetCurSession(r)
+			if err != nil {
+				http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
+			}
+
 			curSession.Values["userID"] = user.ID
 			curSession.Values["isAdmin"] = user.IsAdmin
 			curSession.Values["isTechOfficer"] = user.IsTechOfficer
 			curSession.Values["isDefaultOfficer"] = user.IsDefaultOfficer // Сохраняем права доступа
-			err := curSession.Save(r, w)
+			err = curSession.Save(r, w)
 			if err != nil {
 				http.Error(w, "Ошибка сохранения сессии", http.StatusUnauthorized)
 			}
@@ -67,7 +68,6 @@ func authUser(r *http.Request) (user, string) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	// Проверка пользователя
 	var user user
 	if err := db.Where("username = ?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -77,7 +77,6 @@ func authUser(r *http.Request) (user, string) {
 		return user, serverErrorText
 	}
 
-	// Проверка пароля
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		return user, "Неверный логин или пароль"
@@ -111,7 +110,6 @@ func registerUser(r *http.Request) string {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
-	// Проверка на существование пользователя
 	var count int64
 	if err := db.Model(&user{}).Where("username = ?", username).Count(&count).Error; err != nil {
 		log.Println("Ошибка при выполнении запроса:", err)
@@ -122,14 +120,12 @@ func registerUser(r *http.Request) string {
 		return "Пользователь с таким логином уже существует"
 	}
 
-	// Хеширование пароля
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Ошибка при хешировании пароля:", err)
 		return serverErrorText
 	}
 
-	// Добавление нового пользователя
 	newUser := user{Username: username, Password: string(hashedPassword)}
 	if err := db.Create(&newUser).Error; err != nil {
 		log.Println("Ошибка при добавлении пользователя:", err)
@@ -139,19 +135,19 @@ func registerUser(r *http.Request) string {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	port := utils.GetPort(r)
-	sessionName := "session-" + port
+	curSession, err := utils.GetCurSession(r)
+	if err != nil {
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
 
-	curSession, _ := session.Store.Get(r, sessionName)
 	curSession.Options.MaxAge = -1
 
-	// Сохраняем изменения в сессии
-	err := curSession.Save(r, w)
+	err = curSession.Save(r, w)
 	if err != nil {
 		http.Error(w, "Ошибка при выходе", http.StatusInternalServerError)
 		return
 	}
 
-	// Перенаправляем на страницу авторизации или главную
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
