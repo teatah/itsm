@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
+	"itsm/utils"
 	"net/http"
 	"strconv"
 )
@@ -70,20 +71,20 @@ func createServiceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func addServiceHandler(w http.ResponseWriter, r *http.Request) {
-	// Передаем пустую структуру в шаблон
 	data := struct {
 		Service  models.Service
 		IsCreate bool
 		IsView   bool
 		IsEdit   bool
+		IsClient bool
 	}{
-		Service:  models.Service{}, // Пустая структура для новой услуги
+		Service:  models.Service{},
 		IsCreate: true,
 		IsView:   false,
 		IsEdit:   false,
+		IsClient: false,
 	}
 
-	// Отображаем шаблон
 	renderTemplate(w, "templates/service/service.html", data)
 }
 
@@ -100,20 +101,26 @@ func openServiceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Передаем данные в шаблон
+	isClient, err := utils.IsClientUser(r)
+	if err != nil {
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
 	data := struct {
 		Service  models.Service
 		IsCreate bool
 		IsView   bool
 		IsEdit   bool
+		IsClient bool
 	}{
 		Service:  service,
 		IsCreate: false,
 		IsView:   true,
 		IsEdit:   false,
+		IsClient: isClient,
 	}
 
-	// Отображаем шаблон
 	renderTemplate(w, "templates/service/service.html", data)
 }
 
@@ -130,20 +137,20 @@ func editServiceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Передаем данные в шаблон
 	data := struct {
 		Service  models.Service
 		IsCreate bool
 		IsView   bool
 		IsEdit   bool
+		IsClient bool
 	}{
 		Service:  service,
 		IsCreate: false,
 		IsView:   false,
 		IsEdit:   true,
+		IsClient: false,
 	}
 
-	// Отображаем шаблон
 	renderTemplate(w, "templates/service/service.html", data)
 }
 
