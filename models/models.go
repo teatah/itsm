@@ -25,6 +25,7 @@ type Incident struct {
 	Description string
 	Status      string    // Например, "open", "in progress", "resolved"
 	UserID      uint      `gorm:"not null"`
+	User        User      `gorm:"foreignKey:UserID"`
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `gorm:"autoCreateTime"`
 }
