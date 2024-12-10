@@ -16,7 +16,7 @@
         <p><strong>Пользователь:</strong> {{.Username}}</p>
         <p><strong>Описание:</strong> {{.Incident.Description}}</p>
         <p><strong>Статус:</strong>
-            {{ if .hasEditRights }}
+            {{ if .HasEditRights }}
             <select name="status" id="status">
                 <option value="Открыт" {{if eq .Incident.Status "Открыт"}}selected{{end}}>Открыт</option>
                 <option value="В работе" {{if eq .Incident.Status "В работе"}}selected{{end}}>В работе</option>
@@ -27,7 +27,7 @@
             {{ end }}
         </p>
         <p><strong>Ответственный:</strong>
-            {{ if .hasEditRights }}
+            {{ if .HasEditRights }}
             <select name="responsible_user_id" id="responsible_user_id">
                 <option value="">Не назначен</option>
                 {{range .TechOfficers}}
@@ -40,12 +40,79 @@
         </p>
         <p><strong>Время создания:</strong> {{.Incident.CreatedAt.Format "02/01/2006 15:04"}}</p>
         <p><strong>Время последнего обновления:</strong> {{.Incident.UpdatedAt.Format "02/01/2006 15:04"}}</p>
-        {{ if .hasEditRights }}
+        {{ if .HasEditRights }}
+        <div>
+            <label for="services">Выберите услуги:</label>
+            <select id="services" name="services" onchange="addService()">
+                <option value="">-- Выберите услугу --</option>
+                {{range .Services}}
+                <option value="{{.ID}}" data-name="{{.Name}}">{{.Name}}</option>
+                {{end}}
+            </select>
+        </div>
+        {{ end }}
+        <div class="selected-services" id="selected-services">
+            <h3>Выбранные услуги:</h3>
+        </div>
+        <input type="hidden" id="selected-services-input" name="selected_services" value="">
+
+        {{ if .HasEditRights }}
             <a href="#" onclick="document.getElementById('updateForm').submit()"  class="button">Сохранить</a>
         {{ end }}
     </form>
 
     <a href="/incidents" class="button">Назад</a>
 </div>
+
+<script>
+    const selectedServices = [
+        {{ range .SelectedServices }}
+            { id: "{{.ID}}", name: "{{.Name}}" },
+        {{ end }}
+    ];
+
+    function addService() {
+        const select = document.getElementById('services');
+        const selectedValue = select.value;
+        const selectedText = select.options[select.selectedIndex].dataset.name; // Получаем название услуги
+
+        if (selectedValue && !selectedServices.some(service => service.id === selectedValue)) {
+            selectedServices.push({ id: selectedValue, name: selectedText });
+            updateSelectedServices();
+        }
+
+        select.value = '';
+    }
+
+    function updateSelectedServices() {
+        const container = document.getElementById('selected-services');
+        const input = document.getElementById('selected-services-input');
+        container.innerHTML = '<h3>Выбранные услуги:</h3>';
+
+        selectedServices.forEach(service => {
+            const serviceDiv = document.createElement('div');
+            serviceDiv.className = 'selected-service';
+            serviceDiv.innerHTML = `
+                ${service.name}
+                {{ if .HasEditRights }}
+                <span class="remove-service" onclick="removeService('${service.id}')">✖</span>
+                {{ end }}
+            `;
+            container.appendChild(serviceDiv);
+        });
+
+        input.value = selectedServices.map(service => service.id).join(',');
+    }
+
+    function removeService(serviceID) {
+        const index = selectedServices.findIndex(service => service.id === serviceID);
+        if (index > -1) {
+            selectedServices.splice(index, 1);
+            updateSelectedServices();
+        }
+    }
+
+    updateSelectedServices();
+</script>
 </body>
 </html>

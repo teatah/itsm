@@ -76,3 +76,20 @@ button {
 button:hover {
     background-color: #45a049;
 }
+
+selected-services {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+}
+.selected-service {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+.remove-service {
+    cursor: pointer;
+    color: red;
+}

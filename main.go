@@ -93,7 +93,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{}, &models.Dialog{}, &models.Incident{})
+	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{},
+		&models.Dialog{}, &models.Incident{}, &models.IncidentService{})
 	if err != nil {
 		log.Fatal(err)
 	}

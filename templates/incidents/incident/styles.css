@@ -34,7 +34,7 @@ strong {
     margin: 10px 0;
     border: none;
     border-radius: 5px;
-    background-color: #4CAF50; /* Зеленый цвет */
+    background-color: #4CAF50;
     color: white;
     text-decoration: none;
     font-weight: bold;
@@ -42,6 +42,22 @@ strong {
 }
 
 .button:hover {
-    background-color: #45a049; /* Темнее зеленый при наведении */
+    background-color: #45a049;
 }
 
+.selected-services {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+}
+.selected-service {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+.remove-service {
+    cursor: pointer;
+    color: red;
+}

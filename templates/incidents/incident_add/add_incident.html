@@ -20,12 +20,67 @@
             <label for="description">Описание:</label>
             <textarea id="description" name="description" required></textarea>
         </div>
-
-
+        <div>
+            <label for="services">Выберите услуги:</label>
+            <select id="services" name="services" onchange="addService()">
+                <option value="">-- Выберите услугу --</option>
+                {{range .Services}}
+                <option value="{{.ID}}" data-name="{{.Name}}">{{.Name}}</option>
+                {{end}}
+            </select>
+        </div>
+        <div class="selected-services" id="selected-services">
+            <h3>Выбранные услуги:</h3>
+        </div>
+        <input type="hidden" id="selected-services-input" name="selected_services" value="">
+        <br>
         <button type="submit" class="button">Создать</button>
         <br>
         <a href="/incidents" class="button">Назад</a>
     </form>
 </div>
+
+<script>
+    const selectedServices = [];
+
+    function addService() {
+        const select = document.getElementById('services');
+        const selectedValue = select.value;
+        const selectedText = select.options[select.selectedIndex].dataset.name; // Получаем название услуги
+
+        if (selectedValue && !selectedServices.some(service => service.id === selectedValue)) {
+            selectedServices.push({ id: selectedValue, name: selectedText });
+            updateSelectedServices();
+        }
+
+        select.value = '';
+    }
+
+    function updateSelectedServices() {
+        const container = document.getElementById('selected-services');
+        const input = document.getElementById('selected-services-input');
+        container.innerHTML = '<h3>Выбранные услуги:</h3>';
+
+        selectedServices.forEach(service => {
+            const serviceDiv = document.createElement('div');
+            serviceDiv.className = 'selected-service';
+            serviceDiv.innerHTML = `
+                ${service.name}
+                <span class="remove-service" onclick="removeService('${service.id}')">✖</span>
+            `;
+            container.appendChild(serviceDiv);
+        });
+
+        input.value = selectedServices.map(service => service.id).join(',');
+    }
+
+    function removeService(serviceID) {
+        const index = selectedServices.findIndex(service => service.id === serviceID);
+        if (index > -1) {
+            selectedServices.splice(index, 1);
+            updateSelectedServices();
+        }
+    }
+</script>
 </body>
 </html>

@@ -8,6 +8,7 @@ import (
 	"itsm/utils"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 var db *gorm.DB
@@ -27,10 +28,19 @@ func addIncidentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Получаем список услуг из базы данных
+	var services []models.Service
+	if err := db.Where("is_business = ?", true).Find(&services).Error; err != nil {
+		http.Error(w, "Ошибка при получении услуг: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	data := struct {
 		IsClient bool
+		Services []models.Service
 	}{
 		IsClient: isClient,
+		Services: services,
 	}
 
 	tmpl, err := template.ParseFiles("templates/incidents/incident_add/add_incident.html",
@@ -77,6 +87,33 @@ func createIncidentHandler(w http.ResponseWriter, r *http.Request) {
 	if err := db.Create(&incident).Error; err != nil {
 		http.Error(w, "Ошибка при добавлении инцидента", http.StatusInternalServerError)
 		return
+	}
+
+	// Получаем выбранные услуги из формы
+	serviceIDs := r.FormValue("selected_services") // Получаем строку с ID услуг
+
+	if serviceIDs != "" {
+		ids := strings.Split(serviceIDs, ",") // Разделяем строку на массив ID
+
+		// Привязываем выбранные услуги к инциденту
+		for _, idStr := range ids {
+			id, err := strconv.ParseUint(idStr, 10, 32) // Преобразуем строку в uint
+			if err != nil {
+				http.Error(w, "Ошибка при преобразовании ID услуги", http.StatusBadRequest)
+				return
+			}
+
+			incidentService := models.IncidentService{
+				IncidentID: incident.ID,
+				ServiceID:  uint(id),
+			}
+
+			// Сохраняем связь в базе данных
+			if err := db.Create(&incidentService).Error; err != nil {
+				http.Error(w, "Ошибка при добавлении связи инцидента и услуги", http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 
 	// Перенаправляем на страницу со списком инцидентов
@@ -138,6 +175,33 @@ func incidentHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var services []models.Service
+	if err := db.Where("is_business = ?", true).Find(&services).Error; err != nil {
+		http.Error(w, "Ошибка при получении услуг: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Получаем только ID выбранных услуг для данного инцидента
+	var selectedServiceIDs []uint
+	if err := db.Model(&models.IncidentService{}).
+		Select("service_id").
+		Where("incident_id = ?", incident.ID).
+		Find(&selectedServiceIDs).Error; err != nil {
+		http.Error(w, "Ошибка при получении услуг: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Создаем новый срез для хранения только выбранных услуг
+	var selectedServices []models.Service
+	for _, service := range services {
+		for _, selectedID := range selectedServiceIDs {
+			if service.ID == selectedID {
+				selectedServices = append(selectedServices, service)
+				break // Выходим из внутреннего цикла, если нашли совпадение
+			}
+		}
+	}
+
 	var responsibleUserIDValue uint
 	if incident.ResponsibleUserID != nil {
 		responsibleUserIDValue = *incident.ResponsibleUserID
@@ -149,7 +213,9 @@ func incidentHandler(w http.ResponseWriter, r *http.Request) {
 		"ResponsibleUserID":       responsibleUserIDValue,
 		"ResponsibleUserUsername": responsibleUserUsername,
 		"TechOfficers":            techOfficers,
-		"hasEditRights":           isAdmin || isTechOfficer,
+		"Services":                services,
+		"SelectedServices":        selectedServices,
+		"HasEditRights":           isAdmin || isTechOfficer,
 		"IsClient":                isClient,
 	}
 
@@ -193,6 +259,36 @@ func updateIncidentsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		incident.ResponsibleUserID = nil
+	}
+
+	// Удаляем старые связи
+	if err := db.Where("incident_id = ?", incident.ID).Delete(&models.IncidentService{}).Error; err != nil {
+		http.Error(w, "Ошибка при удалении старых услуг", http.StatusInternalServerError)
+		return
+	}
+
+	// Обработка выбранных услуг
+	selectedServices := r.FormValue("selected_services")
+	if selectedServices != "" {
+		// Разделяем строку на массив ID услуг
+		serviceIDs := strings.Split(selectedServices, ",")
+
+		// Добавляем новые связи
+		for _, serviceID := range serviceIDs {
+			if serviceID != "" {
+				id, err := strconv.ParseUint(serviceID, 10, 32)
+				if err == nil {
+					incidentService := models.IncidentService{
+						IncidentID: incident.ID,
+						ServiceID:  uint(id),
+					}
+					if err := db.Create(&incidentService).Error; err != nil {
+						http.Error(w, "Ошибка при добавлении услуги", http.StatusInternalServerError)
+						return
+					}
+				}
+			}
+		}
 	}
 
 	if err := db.Save(&incident).Error; err != nil {
