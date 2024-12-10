@@ -31,7 +31,7 @@
             <select name="responsible_user_id" id="responsible_user_id">
                 <option value="">Не назначен</option>
                 {{range .TechOfficers}}
-                <option value="{{.ID}}" {{if eq .ID $.Incident.ResponsibleUserID}}selected{{end}}>{{.Username}}</option>
+                <option value="{{.ID}}" {{if eq .ID $.ResponsibleUserID}}selected{{end}}>{{.Username}}</option>
                 {{end}}
             </select>
             {{ else }}
