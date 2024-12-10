@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Инцидент {{.Incident.Title}}</title>
+    <link rel="stylesheet" href="/templates/incidents/incident/styles.css">
+    <link rel="stylesheet" href="/templates/header/styles.css">
+</head>
+<body>
+{{template "header" .}}
+
+<div class="incident-card">
+    <h1>{{.Incident.Title}}</h1>
+
+    <form id="updateForm" method="post" action="/incident/{{.Incident.ID}}/update">
+        <p><strong>Пользователь:</strong> {{.Username}}</p>
+        <p><strong>Описание:</strong> {{.Incident.Description}}</p>
+        <p><strong>Статус:</strong>
+            {{ if .hasEditRights }}
+            <select name="status" id="status">
+                <option value="Открыт" {{if eq .Incident.Status "Открыт"}}selected{{end}}>Открыт</option>
+                <option value="В работе" {{if eq .Incident.Status "В работе"}}selected{{end}}>В работе</option>
+                <option value="Закрыт" {{if eq .Incident.Status "Закрыт"}}selected{{end}}>Закрыт</option>
+            </select>
+            {{ else }}
+                {{.Incident.Status}}
+            {{ end }}
+        </p>
+        <p><strong>Ответственный:</strong>
+            {{ if .hasEditRights }}
+            <select name="responsible_user_id" id="responsible_user_id">
+                <option value="">Не назначен</option>
+                {{range .TechOfficers}}
+                <option value="{{.ID}}" {{if eq .ID $.Incident.ResponsibleUserID}}selected{{end}}>{{.Username}}</option>
+                {{end}}
+            </select>
+            {{ else }}
+                {{.ResponsibleUserUsername}}
+            {{ end }}
+        </p>
+        <p><strong>Время создания:</strong> {{.Incident.CreatedAt.Format "02/01/2006 15:04"}}</p>
+        <p><strong>Время последнего обновления:</strong> {{.Incident.UpdatedAt.Format "02/01/2006 15:04"}}</p>
+        {{ if .hasEditRights }}
+            <a href="#" onclick="document.getElementById('updateForm').submit()"  class="button">Сохранить</a>
+        {{ end }}
+    </form>
+
+    <a href="/incidents" class="button">Назад</a>
+</div>
+</body>
+</html>
