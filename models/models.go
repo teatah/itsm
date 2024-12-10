@@ -21,13 +21,13 @@ type Service struct {
 
 type Incident struct {
 	ID                uint   `gorm:"primaryKey"`
-	UserID            uint   `gorm:"not null"` // ID пользователя, который создал инцидент
-	ResponsibleUserID uint   `gorm:"not null"` // ID ответственного сотрудника
+	UserID            uint   `gorm:"not null"`
+	ResponsibleUserID uint   `gorm:"not null"`
 	Title             string `gorm:"not null"`
 	Description       string
-	Status            string    // Например, "open", "in progress", "resolved"
+	Status            string
 	CreatedAt         time.Time `gorm:"autoCreateTime"`
-	UpdatedAt         time.Time `gorm:"autoCreateTime"`
+	UpdatedAt         time.Time `gorm:"autoUpdateTime"`
 }
 
 type Message struct {

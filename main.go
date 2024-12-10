@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -12,13 +13,12 @@ import (
 	"itsm/api/messenger"
 	"itsm/api/services"
 	"itsm/models"
+	_ "itsm/session"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
-
-	"github.com/gorilla/mux"
-	_ "itsm/session"
 )
 
 func startServer(port string, db *gorm.DB) {
@@ -85,8 +85,9 @@ func main() {
 	dbPass := getEnv("DB_PASS")
 	dbHost := getEnv("DB_HOST")
 	dbName := getEnv("DB_NAME")
+	loc := url.QueryEscape("Europe/Moscow")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbName)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true&loc=%s", dbUser, dbPass, dbHost, dbName, loc)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)

@@ -11,7 +11,7 @@
 
 <div class="content">
     <h2>Добавить инцидент</h2>
-    <form action="/incidents/add" method="POST">
+    <form action="/incidents/create" method="POST">
         <div>
             <label for="title">Название:</label>
             <input type="text" id="title" name="title" required>
@@ -20,15 +20,11 @@
             <label for="description">Описание:</label>
             <textarea id="description" name="description" required></textarea>
         </div>
-        <div>
-            <label for="status">Статус:</label>
-            <select id="status" name="status" required>
-                <option value="Открыт">Открыт</option>
-                <option value="В работе">В работе</option>
-                <option value="Решен">Решен</option>
-            </select>
-        </div>
-        <button type="submit" class="button">Добавить инцидент</button>
+
+
+        <button type="submit" class="button">Создать</button>
+        <br>
+        <a href="/incidents" class="button">Назад</a>
     </form>
 </div>
 </body>

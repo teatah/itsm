@@ -12,30 +12,37 @@
 <div class="incident-card">
     <h1>{{.Incident.Title}}</h1>
 
-    <form id="myform" method="post" action="/incident/{{.Incident.ID}}/update">
-        <p><strong>Статус:</strong>
-            <select name="status" id="status">
-                <option value="open" {{if eq .Incident.Status "open"}}selected{{end}}>Открыт</option>
-                <option value="in progress" {{if eq .Incident.Status "in progress"}}selected{{end}}>В процессе</option>
-                <option value="resolved" {{if eq .Incident.Status "resolved"}}selected{{end}}>Закрыт</option>
-            </select>
-        </p>
-
+    <form id="updateForm" method="post" action="/incident/{{.Incident.ID}}/update">
         <p><strong>Пользователь:</strong> {{.Username}}</p>
         <p><strong>Описание:</strong> {{.Incident.Description}}</p>
-        <p><strong>Время создания:</strong> {{.Incident.CreatedAt.Format "02/01/2006 15:04"}}</p>
-        <p><strong>Время последнего обновления:</strong> {{.Incident.UpdatedAt.Format "02/01/2006 15:04"}}</p>
-
+        <p><strong>Статус:</strong>
+            {{ if .hasEditRights }}
+            <select name="status" id="status">
+                <option value="Открыт" {{if eq .Incident.Status "Открыт"}}selected{{end}}>Открыт</option>
+                <option value="В работе" {{if eq .Incident.Status "В работе"}}selected{{end}}>В работе</option>
+                <option value="Закрыт" {{if eq .Incident.Status "Закрыт"}}selected{{end}}>Закрыт</option>
+            </select>
+            {{ else }}
+                {{.Incident.Status}}
+            {{ end }}
+        </p>
         <p><strong>Ответственный:</strong>
+            {{ if .hasEditRights }}
             <select name="responsible_user_id" id="responsible_user_id">
                 <option value="">Не назначен</option>
                 {{range .TechOfficers}}
                 <option value="{{.ID}}" {{if eq .ID $.Incident.ResponsibleUserID}}selected{{end}}>{{.Username}}</option>
                 {{end}}
             </select>
+            {{ else }}
+                {{.ResponsibleUserUsername}}
+            {{ end }}
         </p>
-
-        <a href="#" onclick="document.getElementById('myform').submit()"  class="button">Сохранить изменения</a>
+        <p><strong>Время создания:</strong> {{.Incident.CreatedAt.Format "02/01/2006 15:04"}}</p>
+        <p><strong>Время последнего обновления:</strong> {{.Incident.UpdatedAt.Format "02/01/2006 15:04"}}</p>
+        {{ if .hasEditRights }}
+            <a href="#" onclick="document.getElementById('updateForm').submit()"  class="button">Сохранить</a>
+        {{ end }}
     </form>
 
     <a href="/incidents" class="button">Назад</a>

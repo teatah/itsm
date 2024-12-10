@@ -5,9 +5,9 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
-	_ "itsm/session"
 	"itsm/utils"
 	"net/http"
+	"strconv"
 )
 
 var db *gorm.DB
@@ -15,12 +15,24 @@ var db *gorm.DB
 func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
 	r.HandleFunc("/incidents/add", addIncidentHandler).Methods("GET")
-	r.HandleFunc("/incidents/add", createIncidentHandler).Methods("POST")
+	r.HandleFunc("/incidents/create", createIncidentHandler).Methods("POST")
 	r.HandleFunc("/incident/{id}", incidentHandler).Methods("GET")
-	r.HandleFunc("/incident/{id}/update", incidentHandler).Methods("POST")
+	r.HandleFunc("/incident/{id}/update", updateIncidentsHandler).Methods("POST")
 }
 
 func addIncidentHandler(w http.ResponseWriter, r *http.Request) {
+	isClient, err := utils.IsClientUser(r)
+	if err != nil {
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	data := struct {
+		IsClient bool
+	}{
+		IsClient: isClient,
+	}
+
 	tmpl, err := template.ParseFiles("templates/incidents/incident_add/add_incident.html",
 		"templates/header/header.html")
 	if err != nil {
@@ -28,7 +40,7 @@ func addIncidentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := tmpl.Execute(w, nil); err != nil {
+	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, "Ошибка при выполнении шаблона", http.StatusInternalServerError)
 	}
 }
@@ -39,16 +51,14 @@ func createIncidentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	title := r.FormValue("title")
-	description := r.FormValue("description")
-	status := r.FormValue("status")
-
+	// Получаем текущую сессию
 	curSession, err := utils.GetCurSession(r)
 	if err != nil {
 		http.Error(w, "Ошибка при получении сессии", http.StatusInternalServerError)
 		return
 	}
 
+	// Получаем текущего пользователя
 	userID, ok := curSession.Values["userID"].(uint)
 	if !ok {
 		http.Error(w, "Пользователь не найден", http.StatusUnauthorized)
@@ -57,9 +67,9 @@ func createIncidentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Создаем новый инцидент
 	incident := models.Incident{
-		Title:       title,
-		Description: description,
-		Status:      status,
+		Title:       r.FormValue("title"),
+		Description: r.FormValue("description"),
+		Status:      "Открыт",
 		UserID:      userID,
 	}
 
@@ -74,27 +84,37 @@ func createIncidentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func incidentHandler(w http.ResponseWriter, r *http.Request) {
-	// Получаем ID инцидента из URL
-	vars := mux.Vars(r) // Получаем переменные из URL
-	id := vars["id"]    // Извлекаем ID инцидента
+	vars := mux.Vars(r)
+	id := vars["id"]
 
-	// Проверяем, что ID не пустой
 	if id == "" {
 		http.Error(w, "ID инцидента не указан", http.StatusBadRequest)
 		return
 	}
 
 	var incident models.Incident
-	var user models.User
-
 	if err := db.First(&incident, id).Error; err != nil {
 		http.Error(w, "Инцидент не найден", http.StatusNotFound)
 		return
 	}
 
+	var user models.User
 	if err := db.First(&user, incident.UserID).Error; err != nil {
 		http.Error(w, "Пользователь не найден", http.StatusNotFound)
 		return
+	}
+
+	var responsibleUserUsername string
+
+	if incident.ResponsibleUserID == 0 {
+		responsibleUserUsername = "Не назначен"
+	} else {
+		var responsibleUser models.User
+		if err := db.First(&responsibleUser, incident.ResponsibleUserID).Error; err != nil {
+			http.Error(w, "Пользователь не найден", http.StatusNotFound)
+			return
+		}
+		responsibleUserUsername = responsibleUser.Username
 	}
 
 	curSession, err := utils.GetCurSession(r)
@@ -104,34 +124,12 @@ func incidentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	isAdmin := curSession.Values["isAdmin"].(bool)
 	isTechOfficer := curSession.Values["isTechOfficer"].(bool)
-
-	// Обрабатываем данные из формы, если метод POST
-	if r.Method == http.MethodPost {
-		status := r.FormValue("status")
-		responsibleUserID := r.FormValue("responsible_user_id")
-
-		// Обновляем статус инцидента
-		incident.Status = status
-
-		// Преобразуем ID ответственного пользователя в uint
-		if responsibleUserID != "" {
-			var responsibleUser models.User
-			if err := db.First(&responsibleUser, responsibleUserID).Error; err == nil {
-				incident.ResponsibleUserID = responsibleUser.ID
-			}
-		}
-
-		// Сохраняем изменения в базе данных
-		if err := db.Save(&incident).Error; err != nil {
-			http.Error(w, "Ошибка при обновлении инцидента", http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, "/incidents", http.StatusSeeOther)
+	isClient, err := utils.IsClientUser(r)
+	if err != nil {
+		http.Error(w, "Ошибка получения сессии: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	// Загружаем список пользователей с ролью тех.поддержки, если пользователь имеет соответствующие права
 	var techOfficers []models.User
 	if isAdmin || isTechOfficer {
 		if err := db.Where("is_tech_officer = ?", true).Find(&techOfficers).Error; err != nil {
@@ -140,15 +138,15 @@ func incidentHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Создаем данные для передачи в шаблон
 	data := map[string]interface{}{
-		"Incident":     incident,
-		"Username":     user.Username,
-		"TechOfficers": techOfficers,
-		"IsEditable":   isAdmin || isTechOfficer, // Флаг для отображения формы редактирования
+		"Incident":                incident,
+		"Username":                user.Username,
+		"ResponsibleUserUsername": responsibleUserUsername,
+		"TechOfficers":            techOfficers,
+		"hasEditRights":           isAdmin || isTechOfficer,
+		"IsClient":                isClient,
 	}
 
-	// Загружаем и выполняем шаблон
 	tmpl, err := template.ParseFiles("templates/incidents/incident/incident.html",
 		"templates/header/header.html")
 	if err != nil {
@@ -160,4 +158,38 @@ func incidentHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка при выполнении шаблона", http.StatusInternalServerError)
 		return
 	}
+}
+
+func updateIncidentsHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	if id == "" {
+		http.Error(w, "ID инцидента не указан", http.StatusBadRequest)
+		return
+	}
+
+	var incident models.Incident
+	if err := db.First(&incident, id).Error; err != nil {
+		http.Error(w, "Инцидент не найден", http.StatusNotFound)
+		return
+	}
+
+	status := r.FormValue("status")
+	responsibleUserID := r.FormValue("responsible_user_id")
+
+	incident.Status = status
+	if responsibleUserID != "" {
+		userID, err := strconv.ParseUint(responsibleUserID, 10, 32)
+		if err == nil {
+			incident.ResponsibleUserID = uint(userID)
+		}
+	}
+
+	if err := db.Save(&incident).Error; err != nil {
+		http.Error(w, "Ошибка при обновлении инцидента", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/incidents", http.StatusSeeOther)
 }
