@@ -61,6 +61,7 @@ func incidentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	isAdmin := curSession.Values["isAdmin"].(bool)
 	isTechOfficer := curSession.Values["isTechOfficer"].(bool)
+	isClient, _ := utils.IsClientUser(r)
 	userID := curSession.Values["userID"].(uint)
 
 	var incidentsWithUsers []IncidentWithUser
@@ -90,6 +91,7 @@ func incidentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]interface{}{
 		"Incidents": incidentsWithUsers,
+		"IsClient":  isClient,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
