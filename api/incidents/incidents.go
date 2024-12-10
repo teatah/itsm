@@ -95,7 +95,10 @@ func createIncidentHandler(w http.ResponseWriter, r *http.Request) {
 	if serviceIDs != "" {
 		ids := strings.Split(serviceIDs, ",") // Разделяем строку на массив ID
 
-		// Привязываем выбранные услуги к инциденту
+		// Создаем срез для хранения услуг
+		var services []models.Service
+
+		// Загружаем услуги по их ID
 		for _, idStr := range ids {
 			id, err := strconv.ParseUint(idStr, 10, 32) // Преобразуем строку в uint
 			if err != nil {
@@ -103,16 +106,19 @@ func createIncidentHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			incidentService := models.IncidentService{
-				IncidentID: incident.ID,
-				ServiceID:  uint(id),
-			}
-
-			// Сохраняем связь в базе данных
-			if err := db.Create(&incidentService).Error; err != nil {
-				http.Error(w, "Ошибка при добавлении связи инцидента и услуги", http.StatusInternalServerError)
+			var service models.Service
+			if err := db.First(&service, id).Error; err == nil {
+				services = append(services, service)
+			} else {
+				http.Error(w, "Услуга не найдена", http.StatusNotFound)
 				return
 			}
+		}
+
+		// Привязываем выбранные услуги к инциденту
+		if err := db.Model(&incident).Association("Services").Append(services); err != nil {
+			http.Error(w, "Ошибка при добавлении связи инцидента и услуги", http.StatusInternalServerError)
+			return
 		}
 	}
 
@@ -175,31 +181,18 @@ func incidentHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Получаем все услуги, которые являются бизнес-услугами
 	var services []models.Service
 	if err := db.Where("is_business = ?", true).Find(&services).Error; err != nil {
 		http.Error(w, "Ошибка при получении услуг: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Получаем только ID выбранных услуг для данного инцидента
-	var selectedServiceIDs []uint
-	if err := db.Model(&models.IncidentService{}).
-		Select("service_id").
-		Where("incident_id = ?", incident.ID).
-		Find(&selectedServiceIDs).Error; err != nil {
+	// Получаем связанные услуги для данного инцидента
+	var selectedServices []models.Service
+	if err := db.Model(&incident).Association("Services").Find(&selectedServices); err != nil {
 		http.Error(w, "Ошибка при получении услуг: "+err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	// Создаем новый срез для хранения только выбранных услуг
-	var selectedServices []models.Service
-	for _, service := range services {
-		for _, selectedID := range selectedServiceIDs {
-			if service.ID == selectedID {
-				selectedServices = append(selectedServices, service)
-				break // Выходим из внутреннего цикла, если нашли совпадение
-			}
-		}
 	}
 
 	var responsibleUserIDValue uint
@@ -261,8 +254,7 @@ func updateIncidentsHandler(w http.ResponseWriter, r *http.Request) {
 		incident.ResponsibleUserID = nil
 	}
 
-	// Удаляем старые связи
-	if err := db.Where("incident_id = ?", incident.ID).Delete(&models.IncidentService{}).Error; err != nil {
+	if err := db.Model(&incident).Association("Services").Clear(); err != nil {
 		http.Error(w, "Ошибка при удалении старых услуг", http.StatusInternalServerError)
 		return
 	}
@@ -273,21 +265,26 @@ func updateIncidentsHandler(w http.ResponseWriter, r *http.Request) {
 		// Разделяем строку на массив ID услуг
 		serviceIDs := strings.Split(selectedServices, ",")
 
-		// Добавляем новые связи
+		// Создаем срез для хранения услуг
+		var services []models.Service
+
+		// Загружаем услуги по их ID
 		for _, serviceID := range serviceIDs {
 			if serviceID != "" {
 				id, err := strconv.ParseUint(serviceID, 10, 32)
 				if err == nil {
-					incidentService := models.IncidentService{
-						IncidentID: incident.ID,
-						ServiceID:  uint(id),
-					}
-					if err := db.Create(&incidentService).Error; err != nil {
-						http.Error(w, "Ошибка при добавлении услуги", http.StatusInternalServerError)
-						return
+					var service models.Service
+					if err := db.First(&service, id).Error; err == nil {
+						services = append(services, service)
 					}
 				}
 			}
+		}
+
+		// Добавляем новые связи
+		if err := db.Model(&incident).Association("Services").Append(services); err != nil {
+			http.Error(w, "Ошибка при добавлении услуг", http.StatusInternalServerError)
+			return
 		}
 	}
 

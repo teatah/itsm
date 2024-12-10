@@ -94,7 +94,7 @@ func main() {
 	}
 
 	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{},
-		&models.Dialog{}, &models.Incident{}, &models.IncidentService{})
+		&models.Dialog{}, &models.Incident{})
 	if err != nil {
 		log.Fatal(err)
 	}

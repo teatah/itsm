@@ -19,11 +19,6 @@ type Service struct {
 	IsTechnical bool   `gorm:"default:false" json:"is_technical"`
 }
 
-type IncidentService struct {
-	IncidentID uint `gorm:"primaryKey" json:"incident_id"`
-	ServiceID  uint `gorm:"primaryKey" json:"service_id"`
-}
-
 type Incident struct {
 	ID                uint      `gorm:"primaryKey" json:"id"`
 	UserID            uint      `gorm:"not null" json:"user_id"`
