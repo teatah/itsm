@@ -42,7 +42,7 @@
 {{template "header" .}}
 <div class="content">
     <h2>{{if .IsEdit}}Редактирование услуги{{else if .IsView}}Услуга{{else}}Добавление услуги{{end}}</h2>
-    <form action="{{if .IsEdit}}/update-service?id={{.Service.ID}}{{else}}/create-service{{end}}" method="POST" onsubmit="handleSubmit(event)" data-method="{{if .IsEdit}}PUT{{else}}POST{{end}}">
+    <form action="{{if .IsEdit}}/service/{{.Service.ID}}/update{{else}}/services/create{{end}}" method="POST" onsubmit="handleSubmit(event)" data-method="{{if .IsEdit}}PUT{{else}}POST{{end}}">
         {{if .IsCreate}}
         <!-- Если IsCreate истинно, скрываем поле ID -->
         {{else}}
