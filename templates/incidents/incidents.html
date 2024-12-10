@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Список инцидентов</title>
+    <link rel="stylesheet" href="/templates/incidents/styles.css">
+    <link rel="stylesheet" href="/templates/header/styles.css">
+    <script>
+        let sortDirection = 'asc';
+
+        function openIncident(id) {
+            window.location.href = '/incident/' + id;
+        }
+
+        function sortTableByStatus() {
+            const table = document.querySelector('table tbody');
+            const rows = Array.from(table.rows);
+            const statusOrder = ["Закрыт", "В работе", "Открыт"]; // Определяем порядок статусов
+
+            const sortedRows = rows.sort((a, b) => {
+                const statusA = a.cells[1].textContent.trim();
+                const statusB = b.cells[1].textContent.trim();
+                return statusOrder.indexOf(statusA) - statusOrder.indexOf(statusB);
+            });
+
+            // Если текущее направление сортировки - по возрастанию, то сортируем по убыванию
+            if (sortDirection === 'desc') {
+                sortedRows.reverse();
+            }
+
+            // Удаляем старые строки и добавляем отсортированные
+            while (table.firstChild) {
+                table.removeChild(table.firstChild);
+            }
+            sortedRows.forEach(row => table.appendChild(row));
+
+            // Обновляем индикатор сортировки
+            updateSortIndicator();
+        }
+
+        function updateSortIndicator() {
+            const statusHeader = document.querySelector('th:nth-child(2)');
+            const indicator = statusHeader.querySelector('.sort-indicator');
+
+            // Сбрасываем индикаторы для всех заголовков
+            document.querySelectorAll('th .sort-indicator').forEach(ind => {
+                ind.style.display = 'none';
+                ind.classList.remove('sort-asc', 'sort-desc');
+            });
+
+            // Устанавливаем индикатор для текущего заголовка
+            if (sortDirection === 'asc') {
+                indicator.style.display = 'inline';
+                indicator.classList.add('sort-asc');
+            } else {
+                indicator.style.display = 'inline';
+                indicator.classList.add('sort-desc');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('dblclick', function() {
+                    const incidentId = this.dataset.id;
+                    openIncident(incidentId);
+                });
+            });
+
+            // Добавляем обработчик события на заголовок "Статус"
+            const statusHeader = document.querySelector('th:nth-child(2)');
+            const indicator = document.createElement('span');
+            indicator.classList.add('sort-indicator');
+            statusHeader.appendChild(indicator);
+
+            statusHeader.addEventListener('click', function() {
+                // Меняем направление сортировки
+                sortDirection = (sortDirection === 'asc') ? 'desc' : 'asc';
+                sortTableByStatus();
+            });
+        });
+    </script>
+</head>
+<body>
+{{template "header" .}}
+
+<div class="content">
+    <h2>Список инцидентов</h2>
+
+    <a href="/incidents/add" class="button add-service">Добавить инцидент</a>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Название</th>
+            <th>Статус</th>
+            <th>Пользователь</th>
+            <th>Ответственный</th>
+            <th>Создан</th>
+            <th>Последнее изменение</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{range .Incidents}}
+        <tr data-id="{{.ID}}">
+            <td>{{.Title}}</td>
+            <td>{{.Status}}</td>
+            <td>{{.AuthorUsername}}</td>
+            <td>
+                {{if .ResponsibleUsername}}
+                {{.ResponsibleUsername}}
+                {{else}}
+                Не назначен
+                {{end}}
+            </td>
+            <td>{{.CreatedAt.Format "02/01/2006 15:04"}}</td>
+            <td>{{.UpdatedAt.Format "02/01/2006 15:04"}}</td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

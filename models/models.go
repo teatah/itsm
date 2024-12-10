@@ -20,8 +20,14 @@ type Service struct {
 }
 
 type Incident struct {
-	ID      uint   `gorm:"primaryKey"`
-	Details string `gorm:"not null"`
+	ID                uint   `gorm:"primaryKey"`
+	UserID            uint   `gorm:"not null"`
+	ResponsibleUserID uint   `gorm:"not null"`
+	Title             string `gorm:"not null"`
+	Description       string
+	Status            string
+	CreatedAt         time.Time `gorm:"autoCreateTime"`
+	UpdatedAt         time.Time `gorm:"autoUpdateTime"`
 }
 
 type Message struct {
