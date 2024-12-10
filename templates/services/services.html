@@ -24,7 +24,7 @@
         function editService() {
             if (selectedRow) {
                 const serviceId = selectedRow.cells[0].innerText;
-                window.location.href = `/edit-service?id=${serviceId}`;
+                window.location.href = `/service/${serviceId}/edit`;
             } else {
                 alert('Пожалуйста, выберите строку для редактирования.');
             }
@@ -33,7 +33,7 @@
         function openService() {
             if (selectedRow) {
                 const serviceId = selectedRow.cells[0].innerText;
-                window.location.href = `/open-service?id=${serviceId}`;
+                window.location.href = `/service/${serviceId}`;
             } else {
                 alert('Пожалуйста, выберите строку для открытия.');
             }
@@ -44,7 +44,7 @@
                 const serviceId = selectedRow.cells[0].innerText;
                 const confirmation = confirm('Вы уверены, что хотите удалить эту услугу?');
                 if (confirmation) {
-                    fetch(`/delete-service?id=${serviceId}`, {
+                    fetch(`/service/${serviceId}/delete`, {
                         method: 'DELETE'
                     })
                         .then(response => {
@@ -102,7 +102,7 @@
     {{end}}
     <br><br>
     {{if .IsAdmin}}
-    <a class="button add-service" href="/add-service">Добавить новую услугу</a>
+    <a class="button add-service" href="/services/add">Добавить новую услугу</a>
     {{end}}
 </div>
 </body>

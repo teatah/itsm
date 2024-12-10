@@ -14,16 +14,18 @@ var db *gorm.DB
 
 func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
-	r.HandleFunc("/delete-service", deleteServiceHandler).Methods("DELETE")
-	r.HandleFunc("/edit-service", editServiceHandler).Methods("GET")
-	r.HandleFunc("/open-service", openServiceHandler).Methods("GET")
-	r.HandleFunc("/add-service", addServiceHandler).Methods("GET")
-	r.HandleFunc("/update-service", updateServiceHandler).Methods("PUT")
-	r.HandleFunc("/create-service", createServiceHandler).Methods("POST")
+	r.HandleFunc("/service/{id}/delete", deleteServiceHandler).Methods("DELETE")
+	r.HandleFunc("/service/{id}/edit", editServiceHandler).Methods("GET")
+	r.HandleFunc("/service/{id}", openServiceHandler).Methods("GET")
+	r.HandleFunc("/service/{id}/update", updateServiceHandler).Methods("PUT")
+	r.HandleFunc("/services/create", createServiceHandler).Methods("POST")
+	r.HandleFunc("/services/add", addServiceHandler).Methods("GET")
 }
 
 func updateServiceHandler(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	serviceID := vars["id"]
+
 	if serviceID == "" {
 		http.Error(w, "ID услуги не указан", http.StatusBadRequest)
 		return
@@ -35,24 +37,20 @@ func updateServiceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Обновляем поля услуги
 	service.Name = r.FormValue("name")
 	service.Description = r.FormValue("description")
 	service.IsBusiness = r.FormValue("serviceType") == "business"
 	service.IsTechnical = r.FormValue("serviceType") == "technical"
 
-	// Сохраняем изменения в базе данных
 	if err := db.Save(&service).Error; err != nil {
 		http.Error(w, "Ошибка при обновлении услуги", http.StatusInternalServerError)
 		return
 	}
 
-	// Перенаправляем на список услуг
 	http.Redirect(w, r, "/business-services", http.StatusSeeOther)
 }
 
 func createServiceHandler(w http.ResponseWriter, r *http.Request) {
-	// Создаем новую услугу
 	service := models.Service{
 		Name:        r.FormValue("name"),
 		Description: r.FormValue("description"),
@@ -60,13 +58,11 @@ func createServiceHandler(w http.ResponseWriter, r *http.Request) {
 		IsTechnical: r.FormValue("serviceType") == "technical",
 	}
 
-	// Сохраняем новую услугу в базе данных
 	if err := db.Create(&service).Error; err != nil {
 		http.Error(w, "Ошибка при создании услуги", http.StatusInternalServerError)
 		return
 	}
 
-	// Перенаправляем на список услуг
 	http.Redirect(w, r, "/business-services", http.StatusSeeOther)
 }
 
@@ -89,7 +85,9 @@ func addServiceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func openServiceHandler(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	serviceID := vars["id"]
+
 	if serviceID == "" {
 		http.Error(w, "ID услуги не указан", http.StatusBadRequest)
 		return
@@ -125,7 +123,9 @@ func openServiceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func editServiceHandler(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	serviceID := vars["id"]
+
 	if serviceID == "" {
 		http.Error(w, "ID услуги не указан", http.StatusBadRequest)
 		return
@@ -167,21 +167,20 @@ func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 }
 
 func deleteServiceHandler(w http.ResponseWriter, r *http.Request) {
-	// Извлечение ID услуги из параметров запроса
-	serviceID := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	serviceID := vars["id"]
+
 	if serviceID == "" {
 		http.Error(w, "ID услуги не указан", http.StatusBadRequest)
 		return
 	}
 
-	// Преобразование ID в тип uint
 	id, err := strconv.ParseUint(serviceID, 10, 32)
 	if err != nil {
 		http.Error(w, "Неверный формат ID", http.StatusBadRequest)
 		return
 	}
 
-	// Удаление услуги из базы данных
 	var service models.Service
 	if err := db.First(&service, id).Error; err != nil {
 		http.Error(w, "Услуга не найдена", http.StatusNotFound)
@@ -193,6 +192,5 @@ func deleteServiceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Успешное удаление
-	w.WriteHeader(http.StatusNoContent) // 204 No Content
+	w.WriteHeader(http.StatusNoContent)
 }
