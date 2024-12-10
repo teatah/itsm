@@ -43,5 +43,4 @@ type Dialog struct {
 	ID            uint `json:"id"`
 	User1ID       uint `json:"user1_id" gorm:"foreignKey:UserID"`
 	User2ID       uint `json:"user2_id" gorm:"foreignKey:UserID"`
-	LastMessageID uint `json:"last_message_id" gorm:"foreignKey:MessageID"`
 }
