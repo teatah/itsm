@@ -8,8 +8,8 @@ import (
 	"gorm.io/gorm"
 	"itsm/api/auth"
 	"itsm/api/dashboard"
-	"itsm/api/messenger"
 	"itsm/api/incidents"
+	"itsm/api/messenger"
 	"itsm/api/services"
 	"itsm/models"
 	"log"
@@ -92,8 +92,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{}, &models.Dialog{})
-	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{}, &models.Incident{})
+	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{}, &models.Dialog{}, &models.Incident{})
 	if err != nil {
 		log.Fatal(err)
 	}
