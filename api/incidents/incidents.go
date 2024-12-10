@@ -12,13 +12,6 @@ import (
 
 var db *gorm.DB
 
-type IncidentWithUser struct {
-	models.Incident            // Ваша основная структура инцидента
-	AuthorUsername      string // Имя пользователя
-	ResponsibleUsername string
-	Username            string
-}
-
 func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
 	r.HandleFunc("/incidents/add", addIncidentHandler).Methods("GET")
