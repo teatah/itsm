@@ -5,20 +5,12 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"itsm/models"
-	"log"
-
 	_ "itsm/session"
 	"itsm/utils"
 	"net/http"
 )
 
 var db *gorm.DB
-
-type IncidentWithUser struct {
-	models.Incident
-	AuthorUsername      string
-	ResponsibleUsername string
-}
 
 func SetupRoutes(r *mux.Router, database *gorm.DB) {
 	db = database
@@ -53,49 +45,7 @@ func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func incidentsHandler(w http.ResponseWriter, r *http.Request) {
-	curSession, err := utils.GetCurSession(r)
-	if err != nil {
-		http.Error(w, "Ошибка при получении сессии", http.StatusInternalServerError)
-		return
-	}
-
-	isAdmin := curSession.Values["isAdmin"].(bool)
-	isTechOfficer := curSession.Values["isTechOfficer"].(bool)
-	userID := curSession.Values["userID"].(uint)
-
-	var incidentsWithUsers []IncidentWithUser
-	var query *gorm.DB
-
-	query = db.Table("incidents").
-		Select("incidents.*, users.username AS author_username, responsible_users.username AS responsible_username").
-		Joins("JOIN users ON users.id = incidents.user_id").
-		Joins("LEFT JOIN users AS responsible_users ON responsible_users.id = incidents.responsible_user_id")
-
-	if !isAdmin && !isTechOfficer {
-		query = query.Where("incidents.user_id = ?", userID)
-	}
-
-	if err := query.Scan(&incidentsWithUsers).Error; err != nil {
-		log.Printf("Ошибка при получении инцидентов: %v", err)
-		http.Error(w, "Ошибка при получении инцидентов", http.StatusInternalServerError)
-		return
-	}
-
-	tmpl, err := template.ParseFiles("templates/incidents/incidents.html",
-		"templates/header/header.html")
-	if err != nil {
-		http.Error(w, "Ошибка при загрузке шаблона", http.StatusInternalServerError)
-		return
-	}
-
-	data := map[string]interface{}{
-		"Incidents": incidentsWithUsers,
-	}
-
-	if err := tmpl.Execute(w, data); err != nil {
-		http.Error(w, "Ошибка при выполнении шаблона", http.StatusInternalServerError)
-		return
-	}
+	w.Write([]byte("Раздел Инциденты"))
 }
 
 func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +81,7 @@ func businessServicesHandler(w http.ResponseWriter, r *http.Request) {
 	// Передаем данные в шаблон, включая права доступа
 	err = tmpl.Execute(w, map[string]interface{}{
 		"Services":   services,
-		"IsAdmin":    isAdmin,
+		"IsAdmin":    isAdmin, // Передаем информацию о правах доступа
 		"IsBusiness": true,
 		"IsClient":   isClient,
 	})
