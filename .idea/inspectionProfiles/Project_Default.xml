@@ -2,6 +2,9 @@
   <profile version="1.0">
     <option name="myName" value="Project Default" />
     <inspection_tool class="GoDfaErrorMayBeNotNil" enabled="true" level="WARNING" enabled_by_default="true">
+      <functions>
+        <function importPath="itsm/utils" name="GetCurSession" />
+      </functions>
       <methods>
         <method importPath="github.com/gorilla/sessions" receiver="*CookieStore" name="Get" />
       </methods>

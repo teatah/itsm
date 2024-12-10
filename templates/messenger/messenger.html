@@ -197,6 +197,22 @@
         alert('Введите сообщение перед отправкой');
       }
     });
+
+    // Функция для запуска периодического опроса
+    function startPolling() {
+      let dialogId;
+      setInterval(function() {
+        dialogId = $('#dialog-list li.active').data('dialog-id')
+        if (dialogId !== undefined) {
+          loadMessages(dialogId);
+        }
+      }, 5000);
+    }
+
+    // Вызов функции после загрузки страницы
+    $(document).ready(function() {
+      startPolling();
+    });
   });
 </script>
 </body>

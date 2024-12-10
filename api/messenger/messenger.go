@@ -45,6 +45,7 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 		Joins("LEFT JOIN dialogs ON (users.id = dialogs.user1_id AND dialogs.user2_id = ?)"+
 			"OR (users.id = dialogs.user2_id AND dialogs.user1_id = ?)", userID, userID).
 		Where("users.id != ?", userID).
+		Where("users.is_admin OR users.is_tech_officer OR users.is_default_officer").
 		Where("dialogs.id IS NULL").
 		Find(&users).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
