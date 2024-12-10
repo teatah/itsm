@@ -106,11 +106,11 @@ func incidentHandler(w http.ResponseWriter, r *http.Request) {
 
 	var responsibleUserUsername string
 
-	if incident.ResponsibleUserID == 0 {
+	if incident.ResponsibleUserID == nil {
 		responsibleUserUsername = "Не назначен"
 	} else {
 		var responsibleUser models.User
-		if err := db.First(&responsibleUser, incident.ResponsibleUserID).Error; err != nil {
+		if err := db.First(&responsibleUser, *incident.ResponsibleUserID).Error; err != nil {
 			http.Error(w, "Пользователь не найден", http.StatusNotFound)
 			return
 		}
@@ -138,9 +138,15 @@ func incidentHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var responsibleUserIDValue uint
+	if incident.ResponsibleUserID != nil {
+		responsibleUserIDValue = *incident.ResponsibleUserID
+	}
+
 	data := map[string]interface{}{
 		"Incident":                incident,
 		"Username":                user.Username,
+		"ResponsibleUserID":       responsibleUserIDValue,
 		"ResponsibleUserUsername": responsibleUserUsername,
 		"TechOfficers":            techOfficers,
 		"hasEditRights":           isAdmin || isTechOfficer,
@@ -182,8 +188,11 @@ func updateIncidentsHandler(w http.ResponseWriter, r *http.Request) {
 	if responsibleUserID != "" {
 		userID, err := strconv.ParseUint(responsibleUserID, 10, 32)
 		if err == nil {
-			incident.ResponsibleUserID = uint(userID)
+			incident.ResponsibleUserID = new(uint)
+			*incident.ResponsibleUserID = uint(userID)
 		}
+	} else {
+		incident.ResponsibleUserID = nil
 	}
 
 	if err := db.Save(&incident).Error; err != nil {
