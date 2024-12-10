@@ -6,6 +6,10 @@
     position: relative;
 }
 
+.header h1 {
+    color: white;
+}
+
 .nav {
     margin: 20px 0;
 }

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить инцидент</title>
+    <link rel="stylesheet" href="/templates/incidents/incident_add/styles.css">
+    <link rel="stylesheet" href="/templates/header/styles.css">
+</head>
+<body>
+{{template "header" .}}
+
+<div class="content">
+    <h2>Добавить инцидент</h2>
+    <form action="/incidents/create" method="POST">
+        <div>
+            <label for="title">Название:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div>
+            <label for="description">Описание:</label>
+            <textarea id="description" name="description" required></textarea>
+        </div>
+
+
+        <button type="submit" class="button">Создать</button>
+        <br>
+        <a href="/incidents" class="button">Назад</a>
+    </form>
+</div>
+</body>
+</html>

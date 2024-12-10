@@ -3,21 +3,22 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"itsm/api/auth"
 	"itsm/api/dashboard"
+	"itsm/api/incidents"
 	"itsm/api/messenger"
 	"itsm/api/services"
 	"itsm/models"
+	_ "itsm/session"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
-
-	"github.com/gorilla/mux"
-	_ "itsm/session"
 )
 
 func startServer(port string, db *gorm.DB) {
@@ -25,6 +26,7 @@ func startServer(port string, db *gorm.DB) {
 	auth.SetupRoutes(r, db)
 	dashboard.SetupRoutes(r, db)
 	services.SetupRoutes(r, db)
+	incidents.SetupRoutes(r, db)
 	messenger.SetupRoutes(r, db)
 
 	fs := http.FileServer(http.Dir("./templates"))
@@ -83,14 +85,15 @@ func main() {
 	dbPass := getEnv("DB_PASS")
 	dbHost := getEnv("DB_HOST")
 	dbName := getEnv("DB_NAME")
+	loc := url.QueryEscape("Europe/Moscow")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", dbUser, dbPass, dbHost, dbName)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true&loc=%s", dbUser, dbPass, dbHost, dbName, loc)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{}, &models.Dialog{})
+	err = db.AutoMigrate(&models.User{}, &models.Service{}, &models.Message{}, &models.Dialog{}, &models.Incident{})
 	if err != nil {
 		log.Fatal(err)
 	}
