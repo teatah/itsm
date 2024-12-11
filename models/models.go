@@ -30,6 +30,7 @@ type Incident struct {
 	UpdatedAt         time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 	User              User      `gorm:"foreignKey:UserID" json:"user"`
 	ResponsibleUser   User      `gorm:"foreignKey:ResponsibleUserID" json:"responsible_user"`
+	Services          []Service `gorm:"many2many:incident_services;" json:"services"`
 }
 
 type Message struct {
